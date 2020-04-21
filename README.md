@@ -1,5 +1,8 @@
+
 # EBBEF2p for Python
 
+[![PyPI version](https://badge.fury.io/py/ebbef2p-python.svg)](https://badge.fury.io/py/ebbef2p-python)
+[![GitHub license](https://img.shields.io/github/license/bteodoru/ebbef2p-python)](https://github.com/bteodoru/ebbef2p-python/blob/master/LICENSE)
 
 ## Background
 

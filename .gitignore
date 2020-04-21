@@ -1,2 +1,7 @@
 # ignore build files for docs
 docs/build/*
+
+
+build/
+ebbef2p_python.egg-info/
+dist/

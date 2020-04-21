@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="EBBEF2p",
+    name="ebbef2p-python",
     version="0.0.1",
     author="Bogdan Teodoru",
     author_email="bteodoru@gmail.com",
@@ -15,6 +15,15 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=['numpy', 'matplotlib', 'itertools', 'math'],
     classifiers=[
+        # How mature is this project? Common values are
+	#Development Status :: 1 - Planning
+	#Development Status :: 2 - Pre-Alpha
+	#Development Status :: 3 - Alpha
+	#Development Status :: 4 - Beta
+	#Development Status :: 5 - Production/Stable
+	#Development Status :: 6 - Mature
+	#Development Status :: 7 - Inactive
+        "Development Status :: 4 - Beta",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
@@ -24,5 +33,6 @@ setuptools.setup(
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering",
     ],
+    keywords='finite element method, math, numerics, elastic foundation',
     python_requires='>=3.6',
 )
