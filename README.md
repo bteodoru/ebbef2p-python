@@ -1,4 +1,9 @@
-# EBBEF2p
+# EBBEF2p for Python
 
-EBBEF2p (Euler-Bernoulli Beams on Two-Parameter Elastic Foundationis) can handle a wide range of static
-loading problems involving a one-dimensional beam supported by elastic foundation.
+
+## Background
+
+The computer program EBBEF2p was originally written as a toolbox for the MATLAB computing environment. EBBEF2p (Euler-Bernoulli Beams on Two-Parameter Elastic Foundationis) can handle a wide range of static loading problems involving one-dimensional beams supported by elastic foundation.
+
+## Why EBBEF2p for Python?
+Matlab is a quite expensive comercial product, which means that code that is written in Matlab can only be used by people with sufficient funds to buy a license. Unlike MATLAB, Python is free to use and distribute both for personal and commercial use.
