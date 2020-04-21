@@ -30,7 +30,7 @@ DESCR_SHORT = "Euler-Bernoulli Beams on Two-Parameter Elastic Foundations"
 
 # -- Project information -----------------------------------------------------
 
-project = u'ebbef2p'
+project = u'ebbef2p-python'
 copyright = u'2020, Bogdan Teodoru'
 author = u'Bogdan Teodoru'
 
@@ -83,7 +83,22 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
 
-
+rst_prolog = f"""
+.. |name| replace:: {NAME}
+.. |name_long| replace:: {NAME_LONG}
+.. |name_cli| replace:: ``{NAME_CLI}``
+.. |eb| replace:: Euler-Bernoulli
+.. |name_bold| replace:: **{NAME}**
+.. |dof| replace:: d.o.f.
+.. |dof_long| replace:: degrees of freedom
+.. _FEM: https://en.wikipedia.org/wiki/Finite_element_method
+.. _FE: https://en.wikipedia.org/wiki/Finite_element_method
+.. _PyPI: https://pypi.org/project/framat/
+.. |pypi_long| replace:: Python Package Index
+.. _pip: https://pip.pypa.io/en/stable/
+.. |author1| replace:: {AUTHOR}
+.. |license| replace:: {LICENCE_NAME}
+"""
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -99,9 +114,9 @@ html_theme = 'alabaster'
 html_theme_options = {
     'show_powered_by': False,
     'github_user': 'bteodoru',
-    'github_repo': 'ebbef2p',
+    'github_repo': 'ebbef2p-python',
     'github_banner': False,
-    'show_related': False,
+    'show_related': True,
     'note_bg': '#FFF59C',
 }
 

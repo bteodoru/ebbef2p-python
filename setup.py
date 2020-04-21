@@ -5,15 +5,15 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ebbef2p-python",
-    version="0.0.1",
+    version="0.0.1.dev1",
     author="Bogdan Teodoru",
     author_email="bteodoru@gmail.com",
     description="Tool for Finite Element Analysis of beams on elastic foundations",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/bteodoru/ebbef2p",
+    url="https://github.com/bteodoru/ebbef2p-python",
     packages=setuptools.find_packages(),
-    install_requires=['numpy', 'matplotlib', 'itertools', 'math'],
+    install_requires=['numpy==1.13.3', 'matplotlib==2.1.1'],
     classifiers=[
         # How mature is this project? Common values are
 	#Development Status :: 1 - Planning
