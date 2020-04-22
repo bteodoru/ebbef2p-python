@@ -34,5 +34,5 @@ setuptools.setup(
         "Topic :: Scientific/Engineering",
     ],
     keywords='finite element method, math, numerics, elastic foundation',
-    python_requires='>=3.0',
+    python_requires='>=3.6',
 )

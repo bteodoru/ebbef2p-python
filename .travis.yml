@@ -6,6 +6,11 @@ before_install:
   - python --version
   - pip install -U pip
   - pip install -U pytest
+  #- pip install codecov
+  - pip install coveralls
+  
 install:
   - pip install . # install package + test dependencies
 script: pytest # run tests
+after_success:
+  - coveralls
