@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ebbef2p-python",
-    version="0.0.1.dev1",
+    version="0.0.2.dev1",
     author="Bogdan Teodoru",
     author_email="bteodoru@gmail.com",
     description="Tool for Finite Element Analysis of beams on elastic foundations",
