@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/bteodoru/ebbef2p-python",
     packages=setuptools.find_packages(),
-    install_requires=['numpy==1.13.3', 'matplotlib==2.1.1'],
+    install_requires=['numpy', 'matplotlib'],
     classifiers=[
         # How mature is this project? Common values are
 	#Development Status :: 1 - Planning
@@ -34,5 +34,5 @@ setuptools.setup(
         "Topic :: Scientific/Engineering",
     ],
     keywords='finite element method, math, numerics, elastic foundation',
-    python_requires='>=3.6',
+    python_requires='>=3.0',
 )
