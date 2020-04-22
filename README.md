@@ -4,6 +4,7 @@
 [![PyPI version](https://badge.fury.io/py/ebbef2p-python.svg)](https://badge.fury.io/py/ebbef2p-python)
 [![GitHub license](https://img.shields.io/github/license/bteodoru/ebbef2p-python)](https://github.com/bteodoru/ebbef2p-python/blob/master/LICENSE)
 [![Build Status](https://travis-ci.com/bteodoru/ebbef2p-python.svg?branch=master)](https://travis-ci.com/bteodoru/ebbef2p-python)
+[![Coverage Status](https://coveralls.io/repos/github/bteodoru/ebbef2p-python/badge.svg?branch=master)](https://coveralls.io/github/bteodoru/ebbef2p-python?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/ebbef2p-python/badge/?version=latest)](https://ebbef2p-python.readthedocs.io/en/latest/?badge=latest)
 ## Background
 
