@@ -7,10 +7,12 @@ before_install:
   - pip install -U pip
   - pip install -U pytest
   #- pip install codecov
+  - pip install pytest-cov
   - pip install coveralls
   
 install:
   - pip install . # install package + test dependencies
-script: pytest # run tests
+script: #pytest # run tests
+  - pytest --cov=ebbef2p/
 after_success:
   - coveralls
