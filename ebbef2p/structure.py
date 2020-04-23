@@ -31,30 +31,6 @@ class Structure():
         self.forces = []
         #self.qn = []
 
-    # @property
-    def get_points_(self):
-                
-        v = np.array([])
-        for b in self.beams:
-            # [2, 3, 5] -> [0, 2, 5, 10] np.cumsum()
-            v = np.union1d(v, b.coord)
-        # for f in self.forces:
-        #     v = np.union1d(v, f[1])
-        for nl in self.nodal_loads:
-            v = np.union1d(v, nl.position)
-
-        for ns in self.nodal_supports:
-            v = np.union1d(v, ns.position)
-        # for m in self.moments:
-        #     v = np.union1d(v, m[1])
-        for q in self.distributed_loads:
-            v = np.union1d(v, q.position)
-        for sc in self.soil_conditions:
-            #v = reduce(np.union1d, (v, sc.k[1], sc.t[1]))
-            #reduce(np.union1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))
-            v = np.union1d(v, sc.position)
-
-        return v
 
     def get_points(self):
         v = list(set().union([val for sublist in [b.coord for b in self.beams] for val in sublist],
@@ -99,20 +75,6 @@ class Structure():
         self.elements = self.add_elements(nodes)
         return nodes
 
-    def mesh(self, n):
-        points = self.get_points()
-        size = (max(points) - min(points))/n
-        nodes = np.array([])
-        #nodes = []
-
-        for i in range(1, len(points)):
-            nodes = np.union1d(nodes, np.linspace(
-                points[i-1], points[i], 1 + math.ceil((points[i]-points[i-1])/size)))
-            #nodes.append(np.linspace(points[i-1], points[i], 1 + math.ceil((points[i]-points[i-1])/size)))
-        # return nodes
-        self.nodes = nodes
-        #self.elements = self.add_elements(nodes)
-        return nodes
 
     def add_elements(self, nodes):
         elements = []
