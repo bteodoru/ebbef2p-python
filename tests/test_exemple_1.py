@@ -19,4 +19,4 @@ def test_simple_supported_beam():
     
     
     assert s.get_shear_forces()['values'][0] == pytest.approx(25, 0.1)
-   # assert S.get_bending_moments().[1] == 25
+    assert s.get_bending_moments()['values'][1] == pytest.approx(125, 0.1)
