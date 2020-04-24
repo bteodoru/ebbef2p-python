@@ -145,13 +145,13 @@ class Structure():
 
         return K
 
-    def build_global_flexural_matrix(self, elements):
-        K = np.zeros((2*(len(elements)+1), 2*(len(elements)+1)))
-        for e, element in enumerate(elements):
-            # ke = flexural_stiffness(element)
-            K[e*2:e*2+4, e*2:e*2+4] += element.ke
+    # def build_global_flexural_matrix(self, elements):
+    #     K = np.zeros((2*(len(elements)+1), 2*(len(elements)+1)))
+    #     for e, element in enumerate(elements):
+    #         # ke = flexural_stiffness(element)
+    #         K[e*2:e*2+4, e*2:e*2+4] += element.ke
 
-        return K
+    #     return K
 
     def get_forces(self):
         f = np.zeros((len(self.elements), 4))
@@ -203,27 +203,6 @@ class Structure():
                  'coords'], self.get_bending_moments()['values'])
         plt.show()
 
-    def get_bc(self):
-        #cs = np.zeros(len(self.nodes)*2)
-        bcdof = np.array([])
-        for c in self.constraints:
-           # ni = np.where(self.nodes == c[2])[0]
-            ni = np.where(self.nodes == c['x'])[0]
-            # print(ni)
-            if 'uz' in c:
-               # bcdof.append([int(ni[0]*2), c['ux']])
-               #{'uz': 0, 'x': 9}
-                bcdof = np.append(bcdof, [ni[0]*2, c['uz']])
-            if 'ur' in c:
-                bcdof = np.append(bcdof, [1+ni[0]*2, c['ur']])
-               # bcdof.append([int(1+ni[0]*2), c['ur']])
-           # bcdof.append([ni[0], c[0], c[1]])
-           # bcdof.append([ni[0]+1, c[0], c[1]])
-            # print(index)
-            #bcdof[2*index] = c[0]
-            #bcdof[2*index + 1] = c[1]
-
-        return np.reshape(bcdof, (len(self.constraints), 2))
 
     def get_boudary_conditions(self):
         bc = np.array([])

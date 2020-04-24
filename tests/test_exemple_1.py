@@ -15,11 +15,13 @@ def test_simple_supported_beam_P():
     K=s.build_global_matrix()
     sol = s.solve(K, s.build_load_vector(), s.get_boudary_conditions())
     #print(s.get_shear_forces()['values'][0])
+    #print(s.get_displacements()['vertical_displacements'][0])
    
     
     
     assert s.get_shear_forces()['values'][0] == pytest.approx(25, 0.1)
     assert s.get_bending_moments()['values'][1] == pytest.approx(125, 0.1)
+    assert s.get_displacements()['vertical_displacements'][0] == pytest.approx(0, 0.1)
 
 def test_simple_supported_beam_q():
     s = Structure('test')
