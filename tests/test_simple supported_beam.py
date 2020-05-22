@@ -44,7 +44,7 @@ def test_uniformly_distributed_load():
     s.add_distributed_load((q, q), (0, L))
     s.add_nodal_support({'uz': 0, 'ur': "NaN"}, 0)
     s.add_nodal_support({'uz': 0, 'ur': "NaN"}, L)
-    s.add_nodes(100)
+    s.add_nodes(200)
     s.add_elements(s.nodes)
     s.solve(s.build_global_matrix(), s.build_load_vector(), s.get_boudary_conditions())
   
