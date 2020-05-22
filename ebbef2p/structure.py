@@ -1,6 +1,8 @@
 from .beam import Beam
 from .element import BeamElement
-from .soil_conditions import SoilCondition
+#from .soil_conditions import SoilCondition
+from .elastic_foundation import ElasticFoundation
+from .vlasov_foundation_parameters import VlasovFoundationParameters
 from .distributed_load import DistributedLoad
 from .nodal_load import NodalLoad
 from .nodal_support import NodalSupport
@@ -25,8 +27,10 @@ class Structure():
         self.distributed_loads = []
         self.nodal_supports = []
         self.constraints = []
-        self.soil_conditions = []
+        #self.soil_conditions = []
+        self.elastic_foundation = []
         self.nodes = []
+        self.elements = []
         self.u = []
         self.forces = []
         #self.qn = []
@@ -38,7 +42,7 @@ class Structure():
                                  self.nodal_supports],
                              [val for sublist in [
                                  q.position for q in self.distributed_loads] for val in sublist],
-                             [val for sublist in [sc.position for sc in self.soil_conditions] for val in sublist])) \
+                             [val for sublist in [ef.position for ef in self.elastic_foundation] for val in sublist])) \
             # [val for sublist in [sc.t[1] for sc in self.soil_conditions] for val in sublist] ))
         v.sort()
         return v
@@ -54,32 +58,88 @@ class Structure():
 
     def add_nodal_support(self, constraints, position):
         self.nodal_supports.append(NodalSupport(constraints, position))
+  
+    def add_elastic_foundation(self, value, position, type):
+        self.elastic_foundation.append(ElasticFoundation(value, position, type))
 
-    def add_soil_condition(self, value, position, type):
-        # self.soil_conditions[0].append(k)
-        # self.soil_conditions[1].append(t)
-        self.soil_conditions.append(SoilCondition(value, position, type))
-
-    def discretization(self, n):
-        points = self.get_points()
-        size = (max(points) - min(points))/n
+    def add_nodes(self, n):
+        delta = (max(self.get_points()) - min(self.get_points()))/n
         nodes = np.array([])
-        #nodes = []
-
-        for i in range(1, len(points)):
+        for i in range(1, len(self.get_points())):
             nodes = np.union1d(nodes, np.linspace(
-                points[i-1], points[i], 1 + math.ceil((points[i]-points[i-1])/size)))
-            #nodes.append(np.linspace(points[i-1], points[i], 1 + math.ceil((points[i]-points[i-1])/size)))
-        # return nodes
+                self.get_points()[i-1], self.get_points()[i], 1 + math.ceil((self.get_points()[i]-self.get_points()[i-1])/delta)))
         self.nodes = nodes
-        self.elements = self.add_elements(nodes)
-        return nodes
-
 
     def add_elements(self, nodes):
         elements = []
         for x in pairwise(nodes):
             ni, nj = x[0], x[1]
+            ki, kj = 0, 0
+            ti, tj = 0, 0
+            for b in self.beams:
+               # if b.coord[0] <  nj <= b.coord[1]:
+                if is_within(x, b.coord):
+                    E = b.E
+                   # print(E)
+                    I = b.I
+            for ef in self.elastic_foundation:
+                # print(ef)
+                # if ef.k[1][0] < nj <= ef.k[1][1]:
+                if ef.type == 'k':
+                    if is_within(x, ef.position):
+                        
+                        ki += np.interp(ni, ef.position, ef.value)
+                        kj += np.interp(nj, ef.position, ef.value)
+                        #print(ki)
+                    # else:
+                    #     ki = 0
+                    #     kj = 0
+                if ef.type == 't':
+                    if is_within(x, ef.position):
+                        ti += np.interp(ni, ef.position, ef.value)
+                        tj += np.interp(nj, ef.position, ef.value)
+                    # else:
+                    #     ti = 0
+                    #     tj = 0
+
+
+
+            be = BeamElement((ni, nj), E, I, [ki, kj], [ti, tj])
+            elements.append(be)
+
+        self.elements = elements
+
+    def compute_elastic_foundation_parameters(self, Edef, nu, depth):
+
+        gamma = 1
+        gamma_it = []
+        parameters = []
+        while gamma > 0:
+            vlasov_parameters = VlasovFoundationParameters(Edef, nu, depth, gamma)
+            parameters.append(vlasov_parameters)
+            self.elastic_foundation = []
+            self.add_elastic_foundation([vlasov_parameters.k, vlasov_parameters.k], [0, sum([b.length for b in self.beams])], 'k')
+            self.add_elastic_foundation([vlasov_parameters.t, vlasov_parameters.t], [0, sum([b.length for b in self.beams])], 't')
+             
+            self.add_elements(self.nodes)
+            self.solve(self.build_global_matrix(), self.build_load_vector(), self.get_boudary_conditions())
+
+            gamma = vlasov_parameters.get_gamma(self.get_displacements(), self.nodes)
+            gamma_it.append(gamma)
+            if len(gamma_it) > 2:
+                    if abs(gamma_it[-2]-gamma_it[-1]) < 0.0001:
+                        break
+        
+        return parameters
+
+
+
+    def add_elements_(self, nodes):
+        elements = []
+        for x in pairwise(nodes):
+            ni, nj = x[0], x[1]
+            ki = 0
+            kj = 0
             for b in self.beams:
                # if b.coord[0] <  nj <= b.coord[1]:
                 if is_within(x, b.coord):
@@ -91,8 +151,10 @@ class Structure():
                 # if sc.k[1][0] < nj <= sc.k[1][1]:
                 if sc.type == 'k':
                     if is_within(x, sc.position):
-                        ki = np.interp(ni, sc.position, sc.value)
-                        kj = np.interp(nj, sc.position, sc.value)
+                        
+                        ki += np.interp(ni, sc.position, sc.value)
+                        kj += np.interp(nj, sc.position, sc.value)
+                        #print(ki)
                     else:
                         ki = 0
                         kj = 0
@@ -332,4 +394,4 @@ class Structure():
         self.forces = f
 
     def __str__(self):
-        return f"Beams: {self.beams} \nNodal Loads: {self.nodal_loads} \nDistributed Loads: {self.distributed_loads} \nSoil Conditions: {self.soil_conditions}"
+        return f"Beams: {self.beams} \nNodal Loads: {self.nodal_loads} \nDistributed Loads: {self.distributed_loads} \nElastic Foundation: {self.elastic_foundation}"

@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="ebbef2p-python",
+    name="ebbef2py",
     version="0.0.2.dev1",
     author="Bogdan Teodoru",
     author_email="bteodoru@gmail.com",
