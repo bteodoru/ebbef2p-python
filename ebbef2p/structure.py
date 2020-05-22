@@ -134,69 +134,6 @@ class Structure():
 
 
 
-    def add_elements_(self, nodes):
-        elements = []
-        for x in pairwise(nodes):
-            ni, nj = x[0], x[1]
-            ki = 0
-            kj = 0
-            for b in self.beams:
-               # if b.coord[0] <  nj <= b.coord[1]:
-                if is_within(x, b.coord):
-                    E = b.E
-                   # print(E)
-                    I = b.I
-            for sc in self.soil_conditions:
-                # print(sc)
-                # if sc.k[1][0] < nj <= sc.k[1][1]:
-                if sc.type == 'k':
-                    if is_within(x, sc.position):
-                        
-                        ki += np.interp(ni, sc.position, sc.value)
-                        kj += np.interp(nj, sc.position, sc.value)
-                        #print(ki)
-                    else:
-                        ki = 0
-                        kj = 0
-                if sc.type == 't':
-                    if is_within(x, sc.position):
-                        ti = np.interp(ni, sc.position, sc.value)
-                        tj = np.interp(nj, sc.position, sc.value)
-                    else:
-                        ti = 0
-                        tj = 0
-
-                # if is_within(x, sc.position):
-                #     if sc['type'] == 'k':
-                #         ki = np.interp(ni, sc['position'], sc['value'])
-                #         kj = np.interp(nj, sc['position'], sc['value'])
-                #     if sc['type'] == 't':
-                #         ti = np.interp(ni, sc['position'], sc['value'])
-                #         tj = np.interp(nj, sc['position'], sc['value'])
-                # if is_within(x, sc.k[1]):
-
-                #     ki = np.polyfit(sc.k[1], sc.k[0], 1)[
-                #         0]*ni + np.polyfit(sc.k[1], sc.k[0], 1)[1]
-                #     kj = np.polyfit(sc.k[1], sc.k[0], 1)[
-                #         0]*nj + np.polyfit(sc.k[1], sc.k[0], 1)[1]
-                # else:
-                #     ki = 0
-                #     kj = 0
-
-                # ## if sc.t[1][0] < nj <= sc.t[1][1]:
-                # if is_within(x, sc.t[1]):
-                #     ti = np.polyfit(sc.t[1], sc.t[0], 1)[
-                #         0]*ni + np.polyfit(sc.t[1], sc.t[0], 1)[1]
-                #     tj = np.polyfit(sc.t[1], sc.t[0], 1)[
-                #         0]*nj + np.polyfit(sc.t[1], sc.t[0], 1)[1]
-                # else:
-                #     ti = 0
-                #     tj = 0
-
-            be = BeamElement((ni, nj), E, I, [ki, kj], [ti, tj])
-            elements.append(be)
-
-        return elements
 
     def build_global_matrix(self):
         elements = self.elements
@@ -386,12 +323,12 @@ class Structure():
         return (np.asmatrix(a), Q)
 
        
-    def elements_forces(self):
-        f = np.zeros(len(self.nodes)*2)
-        for i, el in enumerate(self.elements):
-            f[2*i:2*i+4] += el.forces(self.u[2*i:2*i+4].flatten())
+    # def elements_forces(self):
+    #     f = np.zeros(len(self.nodes)*2)
+    #     for i, el in enumerate(self.elements):
+    #         f[2*i:2*i+4] += el.forces(self.u[2*i:2*i+4].flatten())
 
-        self.forces = f
+    #     self.forces = f
 
     def __str__(self):
         return f"Beams: {self.beams} \nNodal Loads: {self.nodal_loads} \nDistributed Loads: {self.distributed_loads} \nElastic Foundation: {self.elastic_foundation}"

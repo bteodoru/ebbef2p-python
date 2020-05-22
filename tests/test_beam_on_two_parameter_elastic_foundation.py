@@ -20,7 +20,7 @@ def test_razaqpur():
     
   
     w_max = -0.0254 #max displacement
-    M_max = 52.1 #max moment
+    M_max = 52.10 #max moment
     tolerance = 1e-3 #set  a tolerance of 0.1%
 
     #initialize structure object
