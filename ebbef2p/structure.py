@@ -115,7 +115,9 @@ class Structure():
         gamma_it = []
         parameters = []
         while gamma > 0:
+           # print(gamma)
             vlasov_parameters = VlasovFoundationParameters(Edef, nu, depth, gamma)
+            gamma_it.append(gamma)
             parameters.append(vlasov_parameters)
             self.elastic_foundation = []
             self.add_elastic_foundation([vlasov_parameters.k, vlasov_parameters.k], [0, sum([b.length for b in self.beams])], 'k')
@@ -124,8 +126,10 @@ class Structure():
             self.add_elements(self.nodes)
             self.solve(self.build_global_matrix(), self.build_load_vector(), self.get_boudary_conditions())
 
-            gamma = vlasov_parameters.get_gamma(self.get_displacements(), self.nodes)
-            gamma_it.append(gamma)
+            #gamma = vlasov_parameters.get_gamma(self.get_displacements(), self.nodes)
+            gamma = vlasov_parameters.get_gamma(self.get_displacements(), self.nodes, vlasov_parameters.k, vlasov_parameters.t)
+            #gamma_it.append(gamma)
+            #print(gamma_it)
             if len(gamma_it) > 2:
                     if abs(gamma_it[-2]-gamma_it[-1]) < 0.0001:
                         break

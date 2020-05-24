@@ -5,8 +5,9 @@ from ebbef2p.structure import Structure
 
 def test_razaqpur():
     """
-    Exact analysis of beams on two-parameter elastic foundations
-    International Journal of Solids and Structures, 27 (4), 1991
+    Razaqpur, A. G., & Shah, K. R. (1991). 
+    Exact analysis of beams on two-parameter elastic foundations. 
+    International Journal of Solids and Structures, 27(4), 435-454.
     """
 
     L = 15

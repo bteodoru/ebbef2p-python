@@ -19,8 +19,22 @@ class VlasovFoundationParameters():
         return (self.depth/((1+self.nu)*self.gamma**2))*(self.Edef['E1']*(2*self.gamma*np.sinh(2*self.gamma)-4*(self.gamma**2))+(self.Edef['E2']-self.Edef['E1'])*(np.cosh(2*self.gamma)-1-2*self.gamma**2))/(16*((np.sinh(self.gamma))**2))
 
 
-    def get_gamma(self, displacements, coords):
-        return self.depth*np.sqrt(((1-2*self.nu)/(2*(1-self.nu)))*(np.trapz([theta*theta for theta in displacements['rotations']], coords)/np.trapz([w*w for w in displacements['vertical_displacements']], coords)))
+   # def get_gamma_0(self, displacements, coords):
+      #  return self.depth*np.sqrt(((1-2*self.nu)/(2*(1-self.nu)))*(np.trapz([theta*theta for theta in displacements['rotations']], coords)/np.trapz([w*w for w in displacements['vertical_displacements']], coords)))
+
+    def get_gamma(self, displacements, coords, k, t):
+        
+        #return self.depth*np.sqrt(((1-2*self.nu)/(2*(1-self.nu)))*((np.trapz([theta*theta for theta in displacements['rotations']], coords) +  0.5*np.sqrt(k/t)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2))/(0.5*np.sqrt(t/k)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2) + np.trapz([w*w for w in displacements['vertical_displacements']], coords))))
+        #return self.depth*np.sqrt( ( (1-2*self.nu) * (np.trapz([theta*theta for theta in displacements['rotations']], coords) + 0.5*np.sqrt(k/t)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2)) ) / ( (2*(1-self.nu)) *  (np.trapz([w*w for w in displacements['vertical_displacements']], coords) + 0.5*np.sqrt(t/k)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2)) )  )
+        return self.depth*np.sqrt( ( (1-2*self.nu) * (np.trapz([theta*theta for theta in displacements['rotations']], coords) 
+        + 0.5*np.sqrt(k/t)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2)) ) / 
+        ( (2*(1-self.nu)) *  (np.trapz([w*w for w in displacements['vertical_displacements']], coords) 
+        + 0.5*np.sqrt(t/k)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2)) )  )
+
+ #(np.trapz([theta*theta for theta in displacements['rotations']], coords) + 0.5*np.sqrt(k/t)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2))
+ #(np.trapz([w*w for w in displacements['vertical_displacements']], coords) + 0.5*np.sqrt(t/k)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2))
+ # + 0.5*np.sqrt(k/t)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2)
+
 #         function y=GAMMA(Translation,Rotation,Coords,nu,H)
 
 # y=H*sqrt(((1-2*nu)/(2*(1-nu)))*(trapz(Rotation.^2,Coords)/trapz(Translation.^2,Coords))); [w*w for w in vertical_displacements]
