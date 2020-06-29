@@ -2,6 +2,11 @@ from .beam import Beam
 import numpy as np
 
 class BeamElement(Beam):
+    """[summary]
+
+    Args:
+        Beam ([type]): [description]
+    """
     def __init__(self, coord, E, I, k, t):
         Beam.__init__(self, coord, E, I)
        # self.coord = coord
@@ -42,7 +47,8 @@ class BeamElement(Beam):
              1/420*l**2*(6*k[0]+7*k[1]), -1/280*l**3*(k[0]+k[1])],
             [9/140*l*(k[0]+k[1]),          1/420*l**2*(6*k[0]+7*k[1]),
              1/35*l*(3*k[0]+10*k[1]),    -1/420*l**2*(7*k[0]+15*k[1])],
-            [-1/420*l**2*(7*k[0]+6*k[1]), -1/280*l**3*(k[0]+k[1]),     -1/420*l**2*(7*k[0]+15*k[1]), 1/840*l**3*(3*k[0]+5*k[1])]])
+            [-1/420*l**2*(7*k[0]+6*k[1]), -1/280*l**3*(k[0]+k[1]),     
+            -1/420*l**2*(7*k[0]+15*k[1]), 1/840*l**3*(3*k[0]+5*k[1])]])
 
         return k1
 

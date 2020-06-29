@@ -1,10 +1,9 @@
 ebbef2p package
 ===============
 
-Submodules
-----------
 
-ebbef2p.beam module
+
+ebbef2p.beam
 -------------------
 
 .. automodule:: ebbef2p.beam
@@ -52,7 +51,7 @@ ebbef2p.nodal\_load module
    :undoc-members:
    :show-inheritance:
 
-ebbef2p.nodal\_support module
+ebbef2p.nodal\_support
 -----------------------------
 
 .. automodule:: ebbef2p.nodal_support

@@ -20,6 +20,7 @@ def test_center_load():
     s.add_beam(coord=[0, L],  E=E, I=I)
     s.add_nodal_load(P, L/2, 'fz')
     s.add_nodal_support({'uz': 0, 'ur': "NaN"}, 0)
+    #s.add_nodal_support(NodalSupport({'uz': 0, 'ur': "NaN"}, 0))
     s.add_nodal_support({'uz': 0, 'ur': "NaN"}, L)
     s.add_nodes(25)
     s.add_elements(s.nodes)

@@ -14,11 +14,15 @@ import matplotlib.pyplot as plt
 
 
 class Structure():
-    """docstring for Structure"""
+    """Any model starts with an object of this class.
+
+    Args:
+        name (:obj:`str`): Name of the model
+    """
 
     def __init__(self, name):
-        """Constructor method
-        """        
+        """Inits the Structure class."""
+
         self.name = name
         self.beams = []
         #self.forces = []
@@ -48,21 +52,112 @@ class Structure():
         return v
 
     def add_beam(self, coord, E, I):
+        """Add a :class:`~ebbef2p.beam.Beam` object to the structure 
+        model.
+
+        Args:
+            coord (:obj:`list` of :obj:`float`): List containing start
+                and end coordinate values of structural beam.
+            E (:obj:`float`): Young's modulus of the beam 
+                cross-section.
+            I (:obj:`float`): Area moment of inertia of the beam.
+                cross-section.
+        """
+
         self.beams.append(Beam(coord, E, I))
 
+    def add_load(self, load):
+        """Add a load to the structure model.
+
+        Args:
+            load (:class:`~ebbef2p.nodal_load.NodalLoad` or :class:`~ebbef2p.distributed_load.DistributedLoad`):
+                Nodal load or Distributed load instance.
+        Raises:
+            AttributeError: If ``load`` is not an instance of 
+                either :class:`~ebbef2p.nodal_load.NodalLoad`
+                or :class:`~ebbef2p.distributed_load.DistributedLoad`
+        """
+
+        if isinstance(load, NodalLoad):
+            self.nodal_loads.append(load)
+        elif isinstance(load, DistributedLoad):
+            self.distributed_loads.append(load)
+        else:
+            raise AttributeError('The given parameter is not an ' 
+                                 'instance of NodalLoad or '
+                                 'DistributedLoad')
+
     def add_nodal_load(self, value, position, type):
+        """Add a :class:`~ebbef2p.nodal_load.NodalLoad` object to the 
+        structure model.
+
+        Args:
+            value (:obj:`float`):  The value of the nodal load.
+            position (:obj:`float`): Location along the beam where load
+                 is applied.
+            type (:obj:`str`): The type of the nodal load. A string 
+                identifier that can either be ```my``` to indicate
+                a bending moment or ```fz``` to indicate a vertical 
+                force. 
+        """
+
         self.nodal_loads.append(NodalLoad(value, position, type))
 
     def add_distributed_load(self, value, position):
+        """Add a :class:`~ebbef2p.distributed_load.DistributedLoad` 
+        object to the structure model.
+
+        Args:
+            value (:obj:`list` of :obj:`float`): List containing start
+                and end values of the distributed load.
+            position (:obj:`list` of :obj:`float`): List containing 
+                start and end coordinate values of the distributed load.
+        """
+
         self.distributed_loads.append(DistributedLoad(value, position))
 
-    def add_nodal_support(self, constraints, position):
-        self.nodal_supports.append(NodalSupport(constraints, position))
+    #def add_nodal_support(self, constraints, position):
+    def add_nodal_support(self, support):
+        """Add nodal support to the structure model.
+
+        Args:
+            support (:class:`~ebbef2p.nodal_support.NodalSupport`): Nodal support instance.
+        """     
+        # """Add a :class:`~ebbef2p.nodal_support.NodalSupport` 
+        # object to the structure model.
+
+        # Args:
+        #     constraints (:obj:`dict`): see :class:`~ebbef2p.nodal_support.NodalSupport` class.
+        #     position (:obj:`float`): Location along the beam where 
+        #         support is applied.
+            
+        # Example:
+        #     >>> s.add_nodal_support({'uz': 0, 'ur': "NaN"}, 0) #restricted vertical displacement
+        # """
+
+        # try:
+        #     self.nodal_supports.append(support)
+        # except AttributeError:
+        #     return None
+        if isinstance(support, NodalSupport):
+            self.nodal_supports.append(support)
+        else:
+            raise AttributeError('The given parameter is not an '
+                                  'instance of NodalSupport')
+
+        #self.nodal_supports.append(NodalSupport(constraints, position))
   
     def add_elastic_foundation(self, value, position, type):
         self.elastic_foundation.append(ElasticFoundation(value, position, type))
 
     def add_nodes(self, n):
+        """Takes an already defined :class:`~ebbef2p.structure.Structure` object 
+        and increases the number of elements.
+
+        Args:
+            n (:obj:`int`): Divide the structure into ``n`` elements.
+        """
+
         delta = (max(self.get_points()) - min(self.get_points()))/n
         nodes = np.array([])
         for i in range(1, len(self.get_points())):

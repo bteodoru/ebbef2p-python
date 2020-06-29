@@ -33,12 +33,7 @@ beam supported by elastic foundation.
    :maxdepth: 2
    :caption: Developer documentation
 
-
-.. toctree::
-   :maxdepth: 4
-   :caption: Contents:
-
-   modules
+   ebbef2p
 
 
 

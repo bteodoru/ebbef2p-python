@@ -14,10 +14,15 @@
 #
 import os
 import sys
+import sphinx_rtd_theme
+import sphinx_bootstrap_theme
 #sys.path.insert(0, os.path.abspath('..'))
+#sys.path.insert(0, os.path.abspath('./ebbef2p'))
 #sys.path.insert(0, os.path.abspath(os.path.join('..','ebbef2p')))
 #sys.path.insert(0, os.path.abspath('./ebbef2p'))
-sys.path.insert(0, "/var/www/ebbef2p-app/server/")
+#sys.path.insert(0, "/var/www/ebbef2p-app/server/")
+#sys.path.append(os.path.abspath('./ebbef2p'))
+sys.path.append(os.path.join(os.path.dirname(__name__), '..'))
 
 NAME = 'EBBEF2p'
 NAME_LONG = 'Euler-Bernoulli Beams on Two-Parameter Elastic Foundations'
@@ -50,14 +55,23 @@ release = u'1.0.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
     'sphinx.ext.autodoc', 
     'sphinx.ext.coverage', 
     'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
-    'sphinx.ext.viewcode']
+    'sphinx.ext.viewcode',
+    'sphinx_rtd_theme']
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
+# Display todos by setting to True
+todo_include_todos = True
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+}
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -104,8 +118,13 @@ rst_prolog = f"""
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+#html_theme = 'alabaster'
 #html_theme = 'classic'
+html_theme = 'sphinx_rtd_theme'
+#html_theme = "sphinxawesome_theme"
+#html_theme_path = ["_themes"]
+#html_theme = 'bootstrap'
+#html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
