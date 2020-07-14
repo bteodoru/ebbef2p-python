@@ -23,6 +23,8 @@ for pa in p:
 
 #print(p[-1].k)
 sol = s.solve(s.build_global_matrix(), s.build_load_vector(), s.get_boudary_conditions())
+print(sol)
+print(s.u)
 
 print(s.get_displacements()['vertical_displacements'][np.where(s.nodes == 50)[0][0]])
 print(s.get_displacements()['vertical_displacements'][0])

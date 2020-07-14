@@ -19,10 +19,10 @@ ebbef2p.distributed\_load module
    :undoc-members:
    :show-inheritance:
 
-ebbef2p.elastic\_foundation\_support module
+ebbef2p.elastic\_foundation module
 -------------------------------------------
 
-.. automodule:: ebbef2p.elastic_foundation_support
+.. automodule:: ebbef2p.elastic_foundation
    :members:
    :undoc-members:
    :show-inheritance:
@@ -55,14 +55,6 @@ ebbef2p.nodal\_support
 -----------------------------
 
 .. automodule:: ebbef2p.nodal_support
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-ebbef2p.soil\_conditions module
--------------------------------
-
-.. automodule:: ebbef2p.soil_conditions
    :members:
    :undoc-members:
    :show-inheritance:

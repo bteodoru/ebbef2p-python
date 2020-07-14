@@ -7,8 +7,8 @@ class BeamElement(Beam):
     Args:
         Beam ([type]): [description]
     """
-    def __init__(self, coord, E, I, k, t):
-        Beam.__init__(self, coord, E, I)
+    def __init__(self, coord, E, h, w, k, t):
+        Beam.__init__(self, coord, E, h, w)
        # self.coord = coord
         #self.E = E
         #self.I = I
@@ -56,13 +56,14 @@ class BeamElement(Beam):
         t = self.t
         l = self.length
         k2 = np.array([
-            [3/5/l*(t[0]+t[1]),  1/10*t[1],            -
-             3/5/l*(t[0]+t[1]),  1/10*t[0]],
-            [1/10*t[1],           1/30*l *
-             (3*t[0]+t[1]), -1/10*t[1],         -1/60*l*(t[0]+t[1])],
+            [3/5/l*(t[0]+t[1]),  1/10*t[1],
+             -3/5/l*(t[0]+t[1]),  1/10*t[0]],
+            [1/10*t[1],           1/30*l *(3*t[0]+t[1]),
+            -1/10*t[1],         -1/60*l*(t[0]+t[1])],
             [-3/5/l*(t[0]+t[1]), -1/10*t[1],
              3/5/l*(t[0]+t[1]), -1/10*t[0]],
-            [1/10*t[0],          -1/60*l*(t[0]+t[1]),   -1/10*t[0],          1/30*l*(t[0]+3*t[1])]])
+            [1/10*t[0],          -1/60*l*(t[0]+t[1]),   
+            -1/10*t[0],          1/30*l*(t[0]+3*t[1])]])
 
         return k2
 
@@ -79,4 +80,9 @@ class BeamElement(Beam):
         return np.dot(self.ke, u)
 
     def __str__(self):
-        return f"Coords: {self.coord} \nYoung's modulus: {self.E} \nLength: {self.length} \nk: {self.k} \nt: {self.t} \nforces: {self.forces}"
+        return f"Coords: {self.coord} \
+                \nYoung's modulus: {self.E} \
+                \nLength: {self.length} \
+                \nk: {self.k} \
+                \nt: {self.t} \
+                \nforces: {self.forces}"

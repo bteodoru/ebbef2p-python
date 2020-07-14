@@ -1,6 +1,5 @@
 from .beam import Beam
 from .element import BeamElement
-#from .soil_conditions import SoilCondition
 from .elastic_foundation import ElasticFoundation
 from .vlasov_foundation_parameters import VlasovFoundationParameters
 from .distributed_load import DistributedLoad
@@ -18,6 +17,13 @@ class Structure():
 
     Args:
         name (:obj:`str`): Name of the model
+        beams (:obj:`list`): List of the beams 
+        nodal_loads (:obj:`list`): List of the nodal loads
+        distributed_loads (:obj:`list`): List of the distributed loads
+        nodal_supports (:obj:`list`): List of the nodal constraints
+        elastic_foundation (:obj:`list`): List 
+        nodes (:obj:`list`): List of the nodes 
+        elements (:obj:`list`): List of the finite elements 
     """
 
     def __init__(self, name):
@@ -40,38 +46,58 @@ class Structure():
         #self.qn = []
 
 
-    def get_points(self):
-        v = list(set().union([val for sublist in [b.coord for b in self.beams] for val in sublist],
-                             [nls.position for nls in self.nodal_loads +
-                                 self.nodal_supports],
-                             [val for sublist in [
-                                 q.position for q in self.distributed_loads] for val in sublist],
-                             [val for sublist in [ef.position for ef in self.elastic_foundation] for val in sublist])) \
-            # [val for sublist in [sc.t[1] for sc in self.soil_conditions] for val in sublist] ))
-        v.sort()
-        return v
+    def get_key_points(self):
+        """Key points are entities that geometrically marks the
+        beams domains, nodal constraints, loads or elastic foundation.
 
-    def add_beam(self, coord, E, I):
-        """Add a :class:`~ebbef2p.beam.Beam` object to the structure 
-        model.
-
-        Args:
-            coord (:obj:`list` of :obj:`float`): List containing start
-                and end coordinate values of structural beam.
-            E (:obj:`float`): Young's modulus of the beam 
-                cross-section.
-            I (:obj:`float`): Area moment of inertia of the beam.
-                cross-section.
+        Returns:
+            :obj:`list`: A list containing positions of the key points 
+            for the current structure.
         """
 
-        self.beams.append(Beam(coord, E, I))
+        key_points = list(set().union(
+            [val for sublist in 
+            [b.coord for b in self.beams] for 
+            val in sublist], 
+            [nls.position for nls in self.nodal_loads 
+            + self.nodal_supports],
+            [val for sublist in 
+            [q.position for q in self.distributed_loads] for 
+            val in sublist],
+            [val for sublist in 
+            [ef.position for ef in self.elastic_foundation] for
+            val in sublist])) 
+        key_points.sort()
+        return key_points
+
+    def add_beam(self, beam):
+        """Add a beam to the structure model.
+
+        Args:
+            beam (:class:`~ebbef2p.beam.Beam`): Beam instance.
+
+        Raises:
+            AttributeError: If ``beam`` is not an instance of 
+                :class:`~ebbef2p.beam.Beam`.
+        """
+
+        if isinstance(beam, Beam):
+            self.beams.append(beam)
+        else:
+            raise AttributeError('The given parameter is not an ' 
+                                 'instance of Beam')
+
+
+        #self.beams.append(Beam(coord, E, I))
 
     def add_load(self, load):
         """Add a load to the structure model.
 
         Args:
-            load (:class:`~ebbef2p.nodal_load.NodalLoad` or :class:`~ebbef2p.distributed_load.DistributedLoad`):
+            load (:class:`~ebbef2p.nodal_load.NodalLoad` or \
+            :class:`~ebbef2p.distributed_load.DistributedLoad`):
                 Nodal load or Distributed load instance.
+        
         Raises:
             AttributeError: If ``load`` is not an instance of 
                 either :class:`~ebbef2p.nodal_load.NodalLoad`
@@ -87,169 +113,146 @@ class Structure():
                                  'instance of NodalLoad or '
                                  'DistributedLoad')
 
-    def add_nodal_load(self, value, position, type):
-        """Add a :class:`~ebbef2p.nodal_load.NodalLoad` object to the 
-        structure model.
-
-        Args:
-            value (:obj:`float`):  The value of the nodal load.
-            position (:obj:`float`): Location along the beam where load
-                 is applied.
-            type (:obj:`str`): The type of the nodal load. A string 
-                identifier that can either be ```my``` to indicate
-                a bending moment or ```fz``` to indicate a vertical 
-                force. 
-        """
-
-        self.nodal_loads.append(NodalLoad(value, position, type))
-
-    def add_distributed_load(self, value, position):
-        """Add a :class:`~ebbef2p.distributed_load.DistributedLoad` 
-        object to the structure model.
-
-        Args:
-            value (:obj:`list` of :obj:`float`): List containing start
-                and end values of the distributed load.
-            position (:obj:`list` of :obj:`float`): List containing 
-                start and end coordinate values of the distributed load.
-        """
-
-        self.distributed_loads.append(DistributedLoad(value, position))
-
-    #def add_nodal_support(self, constraints, position):
     def add_nodal_support(self, support):
         """Add nodal support to the structure model.
 
         Args:
-            support (:class:`~ebbef2p.nodal_support.NodalSupport`): Nodal support instance.
-        """     
-        # """Add a :class:`~ebbef2p.nodal_support.NodalSupport` 
-        # object to the structure model.
+            support (:class:`~ebbef2p.nodal_support.NodalSupport`): 
+                Nodal support instance.
 
-        # Args:
-        #     constraints (:obj:`dict`): see :class:`~ebbef2p.nodal_support.NodalSupport` class.
-        #     position (:obj:`float`): Location along the beam where 
-        #         support is applied.
-            
-        # Example:
-        #     >>> s.add_nodal_support({'uz': 0, 'ur': "NaN"}, 0) #restricted vertical displacement
-        # """
+        Raises:
+            AttributeError: If ``support`` is not an instance of 
+                :class:`~ebbef2p.nodal_support.NodalSupport`
+        """   
 
-        # try:
-        #     self.nodal_supports.append(support)
-        # except AttributeError:
-        #     return None
         if isinstance(support, NodalSupport):
             self.nodal_supports.append(support)
         else:
             raise AttributeError('The given parameter is not an '
                                   'instance of NodalSupport')
-
-        #self.nodal_supports.append(NodalSupport(constraints, position))
   
-    def add_elastic_foundation(self, value, position, type):
-        self.elastic_foundation.append(ElasticFoundation(value, position, type))
-
-    def add_nodes(self, n):
-        """Takes an already defined :class:`~ebbef2p.structure.Structure` object 
-        and increases the number of elements.
+    def add_elastic_foundation(self, elastic_foundation):
+        """Add elastic foundation support to the structure model.
 
         Args:
-            n (:obj:`int`): Divide the structure into ``n`` elements.
+            elastic_foundation (:class:`~ebbef2p.elastic_foundation.ElasticFoundation`):
+                Elastic foundation instance.
+
+        Raises:
+            AttributeError: If ``elastic_foundation`` is not an
+                instance of 
+                :class:`~ebbef2p.elastic_foundation.ElasticFoundation`
         """
 
-        delta = (max(self.get_points()) - min(self.get_points()))/n
+        if isinstance(elastic_foundation, ElasticFoundation):   
+            self.elastic_foundation.append(elastic_foundation)
+        else:
+            raise AttributeError('The given parameter is not an '
+                                  'instance of ElasticFoundation')
+        
+    def discretize(self, n):
+        """Takes an already defined 
+        :class:`~ebbef2p.structure.Structure` object and divide into at 
+        least ``n`` elements.
+
+        Args:
+            n (:obj:`int`): Minimum number of elements to divide the 
+                structure.
+        """
+
+        delta = (max(self.get_key_points()) - min(self.get_key_points())) / n
         nodes = np.array([])
-        for i in range(1, len(self.get_points())):
+        for i in range(1, len(self.get_key_points())):
             nodes = np.union1d(nodes, np.linspace(
-                self.get_points()[i-1], self.get_points()[i], 1 + math.ceil((self.get_points()[i]-self.get_points()[i-1])/delta)))
+                self.get_key_points()[i-1], self.get_key_points()[i], 
+                1 + math.ceil((self.get_key_points()[i]
+                - self.get_key_points()[i-1]) / delta)))
         self.nodes = nodes
 
-    def add_elements(self, nodes):
+    def add_elements(self):
+        """Add beam finite elements to the current structure model
+        """
         elements = []
-        for x in pairwise(nodes):
+        for x in pairwise(self.nodes):
             ni, nj = x[0], x[1]
             ki, kj = 0, 0
             ti, tj = 0, 0
             for b in self.beams:
-               # if b.coord[0] <  nj <= b.coord[1]:
                 if is_within(x, b.coord):
                     E = b.E
-                   # print(E)
-                    I = b.I
+                    h = b.h
+                    w = b.w
             for ef in self.elastic_foundation:
-                # print(ef)
-                # if ef.k[1][0] < nj <= ef.k[1][1]:
                 if ef.type == 'k':
                     if is_within(x, ef.position):
-                        
                         ki += np.interp(ni, ef.position, ef.value)
                         kj += np.interp(nj, ef.position, ef.value)
-                        #print(ki)
-                    # else:
-                    #     ki = 0
-                    #     kj = 0
                 if ef.type == 't':
                     if is_within(x, ef.position):
                         ti += np.interp(ni, ef.position, ef.value)
                         tj += np.interp(nj, ef.position, ef.value)
-                    # else:
-                    #     ti = 0
-                    #     tj = 0
 
-
-
-            be = BeamElement((ni, nj), E, I, [ki, kj], [ti, tj])
-            elements.append(be)
+            beam_element = BeamElement((ni, nj), E, h, w, [ki * w, kj * w], [ti * w, tj * w])
+            elements.append(beam_element)
 
         self.elements = elements
 
     def compute_elastic_foundation_parameters(self, Edef, nu, depth):
+        """Compute elastic foundation parameters
+
+        Args:
+            Edef (:obj:`float`): Modulus of elasticity
+            nu (:obj:`float`): Poisson's ratio
+            depth (:obj:`float`): Foundation depth
+
+        Returns:
+            :obj:`list`: List of 
+            :class:`~ebbef2p.vlasov_foundation_parameters.VlasovFoundationParameters`
+            instances.
+        """
 
         gamma = 1
         gamma_it = []
         parameters = []
+        structure_length = sum([b.length for b in self.beams])
         while gamma > 0:
-           # print(gamma)
-            vlasov_parameters = VlasovFoundationParameters(Edef, nu, depth, gamma)
+            vlasov_parameters = VlasovFoundationParameters(
+                    Edef, nu, depth, gamma)
             gamma_it.append(gamma)
             parameters.append(vlasov_parameters)
             self.elastic_foundation = []
-            self.add_elastic_foundation([vlasov_parameters.k, vlasov_parameters.k], [0, sum([b.length for b in self.beams])], 'k')
-            self.add_elastic_foundation([vlasov_parameters.t, vlasov_parameters.t], [0, sum([b.length for b in self.beams])], 't')
+            self.add_elastic_foundation(ElasticFoundation(
+                    [vlasov_parameters.k, vlasov_parameters.k], 
+                    [0, structure_length], 'k'))
+            self.add_elastic_foundation(ElasticFoundation(
+                    [vlasov_parameters.t, vlasov_parameters.t], 
+                    [0, structure_length], 't'))
              
-            self.add_elements(self.nodes)
-            self.solve(self.build_global_matrix(), self.build_load_vector(), self.get_boudary_conditions())
+            self.add_elements()
+            self.solve()
 
-            #gamma = vlasov_parameters.get_gamma(self.get_displacements(), self.nodes)
-            gamma = vlasov_parameters.get_gamma(self.get_displacements(), self.nodes, vlasov_parameters.k, vlasov_parameters.t)
-            #gamma_it.append(gamma)
-            #print(gamma_it)
+
+            gamma = vlasov_parameters.get_gamma(
+                self.get_vertical_displacements(), self.nodes, 
+                vlasov_parameters.k, vlasov_parameters.t)
             if len(gamma_it) > 2:
                     if abs(gamma_it[-2]-gamma_it[-1]) < 0.0001:
                         break
         
         return parameters
 
-
-
-
     def build_global_matrix(self):
+        """Assembles the global stiffness
+
+        Returns:
+            :obj:`numpy.array`: The global stiffness matrix
+        """
         elements = self.elements
         K = np.zeros((2*(len(elements)+1), 2*(len(elements)+1)))
         for e, element in enumerate(elements):
-            # ke = flexural_stiffness(element)
             K[e*2:e*2+4, e*2:e*2+4] += element.stiffness
 
         return K
-
-    # def build_global_flexural_matrix(self, elements):
-    #     K = np.zeros((2*(len(elements)+1), 2*(len(elements)+1)))
-    #     for e, element in enumerate(elements):
-    #         # ke = flexural_stiffness(element)
-    #         K[e*2:e*2+4, e*2:e*2+4] += element.ke
-
-    #     return K
 
     def get_forces(self):
         f = np.zeros((len(self.elements), 4))
@@ -262,25 +265,29 @@ class Structure():
 
         #self.forces = f
 
-    def get_displacements(self):
+    def get_vertical_displacements(self):
+        """Return the nodal displacements based on the analysis results.
 
-        #return dict(vertical_displacements=[w for w in self.u.flatten()[0::2]], rotations=[t for t in self.u.flatten()[1::2]])
+        Returns:
+            :obj:`dict`: A dictionary of {:obj:`str`: :obj:`list`} where the 
+            keys are ```vertical_displacements``` and  ```rotations```.       
+        """
+
         return dict(vertical_displacements=[-w for w in self.u.flatten()[0::2]], rotations=[-t for t in self.u.flatten()[1::2]])
 
     def get_shear_forces(self):
         coords = list(itertools.chain(*[e.coord for e in self.elements]))
         shear_forces = list(itertools.chain(
            # *[(f[0], -f[2]) for f in self.get_forces()]))
-            *[(-f[0], f[2]) for f in self.get_forces()]))
+            *[(f[0], -f[2]) for f in self.get_forces()]))
         # return [coords, shear_forces]
         return dict(coords=coords, values=shear_forces)
         
-
     def get_bending_moments(self):
         coords = list(itertools.chain(*[e.coord for e in self.elements]))
         bending_moments = list(itertools.chain(
             #*[(-f[1], f[3]) for f in self.get_forces()]))
-            *[(f[1], -f[3]) for f in self.get_forces()]))
+            *[(-f[1], f[3]) for f in self.get_forces()]))
 
         return dict(coords=coords, values=bending_moments)
 
@@ -301,7 +308,6 @@ class Structure():
                  'coords'], self.get_bending_moments()['values'])
         plt.show()
 
-
     def get_boudary_conditions(self):
         bc = np.array([])
         # constraints: {ur: 0, uz: 0}, position: 0 ##{'uz': 0, 'ur': "null"}, 9
@@ -309,35 +315,22 @@ class Structure():
             ni = np.where(self.nodes == c.position)[0]
             #print(bool(c.constraints.get('uz') != 'NaN'))
 
-            if c.constraints['uz'] != 'NaN':
+            if c.uz is not None:
                 # if 'uz' in c.constraints:
-                bc = np.append(bc, [ni[0]*2, c.constraints['uz']])
-            if c.constraints['ur'] != 'NaN':
+                bc = np.append(bc, [ni[0]*2, c.uz])
+            if c.ur is not None:
                 # if 'ur' in c.constraints:
-                bc = np.append(bc, [1+ni[0]*2, c.constraints['ur']])
+                bc = np.append(bc, [1+ni[0]*2, c.ur])
         return np.reshape(bc, (int(0.5*len(bc)), 2))
         # print(bc)
 
-    def build_displacements_vector(self):
-        pass
-
     def build_load_vector(self):
-        lv = np.zeros(len(self.nodes)*2)
-        # for f in self.forces:
-        #     index = np.where(self.nodes == f[1])[0]
-        #     # print(2*index)
-        #     lv[2*index] = f[0]
-        # for m in self.moments:
-        #     index = np.where(self.nodes == m[1])[0]
-        #     lv[2*index + 1] = m[0]
+        """Build load vector 
 
-        # for i, n in enumerate(self.nodes):
-        #     for q in self.distributed_loads:
-        #         if q.position[0] <= n <= q.position[1]:
-        # qn = np.zeros(len(self.nodes))
-        #             qn[i] = np.interp(n, q.position, q.value)
-        #lv[2*i] += (n[i+1] - n[i])/20*(7*qn[i] + 3*qn[i+1])
-        #self.qn = qn
+        Returns:
+            :obj:`numpy array`: The load vector
+        """
+        lv = np.zeros(len(self.nodes)*2)
 
         for nl in self.nodal_loads:
             index = np.where(self.nodes == nl.position)[0]
@@ -347,17 +340,6 @@ class Structure():
             if nl.type == 'my':
                 lv[2*index + 1] = nl.value
 
-        #t = np.zeros(len(self.nodes)*2)
-        # for ni, q in enumerate(pairwise(qn)):
-
-        #     qi, qj = q[0], q[1]
-        #     l = self.nodes[ni+1] - self.nodes[ni]
-        #     F1q = l/20 * (7*qi + 3*qj)
-        #     M1q = l**2/60 * (3*qi + 2*qj)
-        #     F2q = l/20 * (3*qi + 7*qj)
-        #     M2q = -l**2/60 * (2*qi + 3*qj)
-
-            #t += [F1q, M1q, F2q, M2q]
         for e, n in enumerate(pairwise(self.nodes)):
             for q in self.distributed_loads:
                 if is_within(n, q.position):
@@ -374,25 +356,38 @@ class Structure():
 
         return lv
 
-    def solve(self, K, f, constraints):
-        """
-        Solve static FE-equations considering boundary conditions.
-        Adapted from CALFEM (for Python): https://github.com/CALFEM/calfem-python
+    def solve(self):
+        """Solve static FE-equations considering boundary conditions.
+        Adapted from CALFEM (for Python): 
+        https://github.com/CALFEM/calfem-python
 
-        Parameters:
-
-        K            global stiffness matrix, dim(K)= nd x nd
-        f            global load vector, dim(f)= nd x 1
-
-        constraints TO DO
         Returns:
-
-        a           solution including boundary values
-        Q           reaction force vector
-                    dim(a)=dim(Q)= nd x 1, nd : number of dof's
-
+            :obj:`tuple`: solution including boundary values (``a``) and 
+            reaction force vector (``Q``), 
+            dim(a)=dim(Q)= nd x 1, nd : number of dof's
         """
+        # """
+        # Solve static FE-equations considering boundary conditions.
+        # Adapted from CALFEM (for Python): 
+        # https://github.com/CALFEM/calfem-python
 
+        # Parameters:
+
+        # K            global stiffness matrix, dim(K)= nd x nd
+        # f            global load vector, dim(f)= nd x 1
+
+        # constraints TO DO
+        # Returns:
+
+        # a           solution including boundary values
+        # Q           reaction force vector
+        #             dim(a)=dim(Q)= nd x 1, nd : number of dof's
+
+        # """
+
+        K = self.build_global_matrix()
+        f = self.build_load_vector()
+        constraints = self.get_boudary_conditions()
         nDofs = K.shape[0]
         bcVal = constraints[:, 1]
         bcPrescr = constraints[:, 0].astype(int)
@@ -410,10 +405,7 @@ class Structure():
         a = np.zeros([nDofs, 1])
         a[np.ix_(bcPrescr)] = np.asmatrix(bcVal).reshape(nPdofs, 1)
         a[np.ix_(bcDofs)] = np.asmatrix(asys).reshape(bcDofs.shape[0], 1)
-        #print(f"K.shape = {asys}")
-        #print(f"a shape = {a.shape}")
-        #print(f"f shape = {f.shape}")
-        # print(a.flatten())
+
 
         Q = K*np.asmatrix(a)-f.reshape(nDofs, 1)
 
@@ -422,12 +414,14 @@ class Structure():
         return (np.asmatrix(a), Q)
 
        
-    # def elements_forces(self):
-    #     f = np.zeros(len(self.nodes)*2)
-    #     for i, el in enumerate(self.elements):
-    #         f[2*i:2*i+4] += el.forces(self.u[2*i:2*i+4].flatten())
-
-    #     self.forces = f
 
     def __str__(self):
-        return f"Beams: {self.beams} \nNodal Loads: {self.nodal_loads} \nDistributed Loads: {self.distributed_loads} \nElastic Foundation: {self.elastic_foundation}"
+        """[summary]
+
+        Returns:
+            [type]: [description]
+        """
+        return f"Beams: {self.beams} \
+                \nNodal Loads: {self.nodal_loads} \
+                \nDistributed Loads: {self.distributed_loads} \
+                \nElastic Foundation: {self.elastic_foundation}"

@@ -2,27 +2,32 @@ class NodalSupport():
     """Class for a node to be used.
 
     Args:
-        constraints (:obj:`dict`): Maps node constraints. Keys
-            are string identifiers to indicate the restriction 
-            type and values are floats representing prescribed
-            translational and rotational displacements.
         position (:obj:`float`): Location along the beam where 
             support is applied.
+        uz (:obj:`float`): Translational restriction in
+            vertical direction. Defaults to ``None``.
+        ur (:obj:`float`): Rotational restriction. 
+            Defaults to ``None``.
 
     Examples:
         .. code-block:: python
 
-            NodalSupport({'uz': 0, 'ur': "NaN"}, 0) # set a roller support
-            NodalSupport({'uz': 0, 'ur': 0}, 0) # set a fixed support
-            NodalSupport({'uz': 1.5, 'ur': 0}, 0) # set a prescribed vertical displacement
+            from ebbef2p import NodalSupport
 
-    Todo:
-        Set a constraints class
+            # set a roller support
+            NodalSupport(position=0, uz=0)
+
+            # set a fixed support
+            NodalSupport(position=0, uz=0, ur=0)
+
+            # set a prescribed vertical displacement
+            NodalSupport(position=0, uz=1.5) 
     """
-
-    def __init__(self, constraints, position):
-        self.constraints = constraints
+    
+    def __init__(self, position, uz=None, ur=None):
+        self.uz = uz
+        self.ur = ur
         self.position = position
-
     def __str__(self):
-        return f"Constraints: {self.constraints} \nPosition: {self.position}"
+        return f"Position: {self.position} \
+                \nuz: {self.uz} \nur: {self.ur}"

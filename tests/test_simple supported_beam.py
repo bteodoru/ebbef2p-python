@@ -42,7 +42,7 @@ def test_uniformly_distributed_load():
     s = Structure('test')
 
     s.add_beam(coord=[0, L],  E=E, I=I)
-    s.add_distributed_load((q, q), (0, L))
+    s.add_distributed_load(be)
     s.add_nodal_support({'uz': 0, 'ur': "NaN"}, 0)
     s.add_nodal_support({'uz': 0, 'ur': "NaN"}, L)
     s.add_nodes(200)
