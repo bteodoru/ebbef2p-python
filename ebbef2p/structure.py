@@ -233,7 +233,7 @@ class Structure():
 
 
             gamma = vlasov_parameters.get_gamma(
-                self.get_vertical_displacements(), self.nodes, 
+                self.get_displacements(), self.nodes, 
                 vlasov_parameters.k, vlasov_parameters.t)
             if len(gamma_it) > 2:
                     if abs(gamma_it[-2]-gamma_it[-1]) < 0.0001:
@@ -265,7 +265,7 @@ class Structure():
 
         #self.forces = f
 
-    def get_vertical_displacements(self):
+    def get_displacements(self):
         """Return the nodal displacements based on the analysis results.
 
         Returns:

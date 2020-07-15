@@ -10,8 +10,8 @@ class Beam():
         coord (:obj:`list` of :obj:`float`): List containing start
             and end coordinates of structural beam.
         E (:obj:`float`): Young's modulus of the cross-section.
-        I (:obj:`float`): Area moment of inertia.
-            cross-section. 
+        h (:obj:`float`): Height of the cross-section. 
+        w (:obj:`float`): Width of the cross-section. 
 
     Examples:
         .. code-block:: python
@@ -21,8 +21,8 @@ class Beam():
             # set a beam from 6 to 12 distance from the 
             # left structure end
             # with Young modulus E = 2.70E+07 and 
-            # moment of inertia I = 5.21E-03
-            b = Beam([6, 12], 2.70E+07, 5.21E-03)        
+            # rectangular cross-section (height h = 1, width w = 0.5)
+            b = Beam(coord=[6, 12], E=2.70E+07, h=1, w=0.5)        
     """    
 
     def __init__(self, coord, E, h, w):

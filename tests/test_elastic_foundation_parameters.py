@@ -1,7 +1,7 @@
 import pytest
 
-from ebbef2p.structure import Structure
-from ebbef2p.vlasov_foundation_parameters import VlasovFoundationParameters
+from ebbef2p import Beam, Structure, NodalLoad, DistributedLoad, VlasovFoundationParameters
+
 
 """
 Girija Vallabhan, C. V., & Das, Y. C. (1991). 
@@ -11,7 +11,9 @@ Journal of geotechnical engineering, 117(6), 956-966.
 
 L = 100
 E = 432000
-I = 2.25
+h = 3
+w = 1
+I = w * h**3 / 12
 nu = 0.2
 P = 20
 q = 3
@@ -25,10 +27,10 @@ def test_concentrated_load_at_center():
 
     s = Structure('test')
         
-    s.add_beam(coord=[0, L],  E=E, I=I)
-    s.add_nodal_load(P, L/2, 'fz')
+    s.add_beam(Beam(coord=[0, L],  E=E, h=h, w=w))
+    s.add_load(NodalLoad(P, L/2, 'fz'))
    
-    s.add_nodes(50)
+    s.discretize(50)
 
     vlasov_parameters = VlasovFoundationParameters({'E1': E/3000, 'E2': E/3000}, nu, L*0.25, gamma)
     p = s.compute_elastic_foundation_parameters({'E1': E/3000, 'E2': E/3000}, nu, L*0.25)
@@ -43,11 +45,11 @@ def test_concentrated_loads_at_ends():
 
     s = Structure('test')
         
-    s.add_beam(coord=[0, L],  E=E, I=I)
-    s.add_nodal_load(P, 0, 'fz')
-    s.add_nodal_load(P, L, 'fz')
+    s.add_beam(Beam(coord=[0, L],  E=E, h=h, w=w))
+    s.add_load(NodalLoad(P, 0, 'fz'))
+    s.add_load(NodalLoad(P, L, 'fz'))
    
-    s.add_nodes(50)
+    s.discretize(50)
 
     vlasov_parameters = VlasovFoundationParameters({'E1': E/3000, 'E2': E/3000}, nu, L*0.25, gamma)
     p = s.compute_elastic_foundation_parameters({'E1': E/3000, 'E2': E/3000}, nu, L*0.25)
@@ -62,10 +64,10 @@ def test_uniformly_distributed_load():
 
     s = Structure('test')
         
-    s.add_beam(coord=[0, L],  E=E, I=I)
-    s.add_distributed_load((q, q), (0, L))
+    s.add_beam(Beam(coord=[0, L],  E=E, h=h, w=w))
+    s.add_load(DistributedLoad(value=(q, q), position=(0, L)))
 
-    s.add_nodes(50)
+    s.discretize(50)
 
     vlasov_parameters = VlasovFoundationParameters({'E1': E/3000, 'E2': E/3000}, nu, L*0.25, gamma)
     p = s.compute_elastic_foundation_parameters({'E1': E/3000, 'E2': E/3000}, nu, L*0.25)
