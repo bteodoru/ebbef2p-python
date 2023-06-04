@@ -15,8 +15,10 @@ q = 3
 
 
 s = Structure('test')
+#print(s.beams[0])
     
 s.add_beam(Beam(coord=[0, 20],  E=27000000, w=0.5, h=1))
+print(s.beams[0])
 s.add_load(NodalLoad(1000, 10, 'fz'))
 s.add_elastic_foundation(ElasticFoundation([4815, 4815], [0, 20], 'k'))     
 s.add_elastic_foundation(ElasticFoundation([12676, 12676], [0, 20], 't'))               

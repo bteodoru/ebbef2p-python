@@ -7,6 +7,13 @@ Installation
 
     pip install ebbef2p-python
 
+It takes a while before new features are added in the official PyPI index. So if you want the latest features,
+install from github.
+
+.. code::
+
+    pip install git+https://github.com/bteodoru/ebbef2p-python.git
+
 .. seealso::
 
     How to get started with pip_:

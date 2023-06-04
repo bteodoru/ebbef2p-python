@@ -21,7 +21,7 @@ class Beam():
             # set a beam from 6 to 12 distance from the 
             # left structure end
             # with Young modulus E = 2.70E+07 and 
-            # rectangular cross-section (height h = 1, width w = 0.5)
+            # a rectangular cross-section (height h = 1, width w = 0.5)
             b = Beam(coord=[6, 12], E=2.70E+07, h=1, w=0.5)        
     """    
 

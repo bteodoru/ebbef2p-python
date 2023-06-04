@@ -46,6 +46,11 @@ class Structure():
         #self.qn = []
 
 
+    @property
+    def length(self):
+
+        return sum([b.length for b in self.beams])
+
     def get_key_points(self):
         """Key points are entities that geometrically marks the
         beams domains, nodal constraints, loads or elastic foundation.
@@ -70,6 +75,28 @@ class Structure():
         key_points.sort()
         return key_points
 
+    def add_beam_n(self, length, E, width, height):
+        """Add a beam to the structure model.
+
+
+        Args:
+            length (:obj:`float`): Length of the beam.
+            E (:obj:`float`): Young's modulus of the cross-section.
+            h (:obj:`float`): Height of the cross-section. 
+            w (:obj:`float`): Width of the cross-section. 
+
+        Returns:
+            :class:`~ebbef2p.beam.Beam`: Beam object.
+        """
+        
+        coords = [self.length, self.length + length]
+
+        new_beam = Beam(coords, E, h, w)
+        self.beams.append(new_beam)
+
+        return new_beam
+        
+    
     def add_beam(self, beam):
         """Add a beam to the structure model.
 
@@ -79,6 +106,9 @@ class Structure():
         Raises:
             AttributeError: If ``beam`` is not an instance of 
                 :class:`~ebbef2p.beam.Beam`.
+        
+        Returns:
+            :class:`~ebbef2p.beam.Beam`: Beam instance.
         """
 
         if isinstance(beam, Beam):
@@ -87,7 +117,7 @@ class Structure():
             raise AttributeError('The given parameter is not an ' 
                                  'instance of Beam')
 
-
+        return beam
         #self.beams.append(Beam(coord, E, I))
 
     def add_load(self, load):
