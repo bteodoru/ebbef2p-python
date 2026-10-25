@@ -1,6 +1,9 @@
 # ignore build files for docs
 docs/build/*
 
+__pycache__/
+*.pyc
+.pytest_cache/
 
 build/
 ebbef2p_python.egg-info/
