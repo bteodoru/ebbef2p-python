@@ -1,7 +1,9 @@
 Verification
 ============
 
-Every case below is part of the automated test suite (``tests`` folder).
+Every case below is part of the automated test suite, in
+``tests/verification`` (except the last row, which is in ``tests/unit``).
+Run them with ``uv run pytest tests/verification``.
 
 .. list-table::
    :header-rows: 1
@@ -34,10 +36,16 @@ Every case below is part of the automated test suite (``tests`` folder).
        uniform load
      - Vallabhan & Das (1991): :math:`\gamma` = 0.507, 1.239, 0.395
      - 0.506, 1.240, 0.395
-   * - Closed-form Vlasov parameters, homogeneous and linearly varying
-       :math:`E`
+   * - Vlasov parameters, homogeneous and linearly varying :math:`E`,
+       :math:`10^{-8} \le \gamma \le 2.5` (closed forms above
+       :math:`\gamma = 0.3`, Taylor series below)
      - numerical quadrature
-     - :math:`10^{-10}`
+     - :math:`10^{-12}`
+   * - Vlasov parameters as :math:`\gamma \to 0`; free beam settling
+       rigidly under uniform load
+     - limits :math:`k = E_{oed}/H`, :math:`g = EH/(6(1+\nu))`;
+       :math:`w = q/k`
+     - :math:`10^{-14}`; :math:`10^{-10}`
    * - Global vertical equilibrium with variable :math:`k`, a jump in
        :math:`g`, supports, and soil beyond the ends
      - applied loads
