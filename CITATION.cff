@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use EBBEF2p in your work, please cite it as below."
+title: "EBBEF2p: Euler-Bernoulli beams on two-parameter elastic foundations"
+type: software
+authors:
+  - family-names: Teodoru
+    given-names: Iancu-Bogdan
+    email: bteodoru@gmail.com
+    affiliation: "Gheorghe Asachi Technical University of Iași"
+version: 1.0.0.dev0
+license: MIT
+repository-code: "https://github.com/bteodoru/ebbef2p-python"
+url: "https://ebbef2p-python.readthedocs.io"
+abstract: >-
+  EBBEF2p is a Python finite element package for the static analysis of
+  Euler-Bernoulli beams on Winkler, Pasternak and modified Vlasov
+  foundations, with foundation parameters varying along the beam, soil
+  continuing beyond the beam ends, and soil pressure including the
+  concentrated forces of the shear layer.
+keywords:
+  - finite element method
+  - beam on elastic foundation
+  - two-parameter foundation
+  - Pasternak
+  - modified Vlasov model
+  - soil-structure interaction
+  - geotechnical engineering

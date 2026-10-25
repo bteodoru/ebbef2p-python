@@ -1,0 +1,65 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: py${{ matrix.python }} ${{ matrix.os }}${{ matrix.resolution == 'lowest-direct' && ' (lowest deps)' || '' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.12", "3.13", "3.14"]
+        resolution: [highest]
+        include:
+          - { os: ubuntu-latest, python: "3.12", resolution: lowest-direct }
+          - { os: macos-latest, python: "3.14", resolution: highest }
+          - { os: windows-latest, python: "3.14", resolution: highest }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run tests
+        run: >
+          uv run --no-default-groups --group test
+          ${{ matrix.resolution == 'lowest-direct' && '--resolution lowest-direct' || '--locked' }}
+          pytest --cov --cov-report=term-missing
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --locked --no-default-groups --group lint ruff check .
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --locked --no-default-groups --group docs sphinx-build -W -b html docs/source docs/build
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv build
+      - name: Smoke-test the wheel
+        run: |
+          uv venv /tmp/wheel-env
+          uv pip install --python /tmp/wheel-env dist/*.whl
+          /tmp/wheel-env/bin/python -c "import ebbef2p; print(ebbef2p.__version__)"

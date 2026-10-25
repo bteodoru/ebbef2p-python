@@ -427,6 +427,7 @@ lint = [
     { name = "ruff" },
 ]
 test = [
+    { name = "matplotlib" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
@@ -450,6 +451,7 @@ dev = [
 docs = [{ name = "sphinx", specifier = ">=7" }]
 lint = [{ name = "ruff", specifier = ">=0.6" }]
 test = [
+    { name = "matplotlib", specifier = ">=3.8" },
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-cov", specifier = ">=5" },
 ]
