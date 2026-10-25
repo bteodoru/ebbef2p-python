@@ -22,10 +22,14 @@ Every case below is part of the automated test suite (``tests`` folder).
    * - Long beam on Winkler foundation, central point load
      - Hetényi (1946)
      - :math:`10^{-6}` (deflection), :math:`10^{-4}` (moment)
+   * - Exact stiffness matrix of a 5 m beam element on a two-parameter
+       foundation, recovered by static condensation of a fine mesh
+     - Razaqpur & Shah (1991), exact element
+     - all 16 entries to the printed precision
    * - Continuous beam on a two-parameter foundation with point load,
-       concentrated moment and partial triangular load
-     - Razaqpur & Shah (1991)
-     - deflection 0.1 %; moment 52.18 vs 52.10 (0.15 %)
+       concentrated moment and partial triangular load: joint rotations
+     - Razaqpur & Shah (1991), exact solution
+     - all three rotations to the four printed digits
    * - Free beam on modified Vlasov foundation: central load, end loads,
        uniform load
      - Vallabhan & Das (1991): :math:`\gamma` = 0.507, 1.239, 0.395
@@ -43,7 +47,11 @@ Every case below is part of the automated test suite (``tests`` folder).
      - numerical differentiation
      - 0.2 %
 
-The bending moment in the Razaqpur & Shah case is computed from element
-equilibrium and does not change with the mesh; it is 0.15 % above the
-published value. Moments obtained from the flexural stiffness alone
-converge to the same 52.18 as the mesh is refined.
+Razaqpur & Shah give the internal forces of their Example 2 only as
+diagrams. The moment computed here jumps from −47.82 to +52.18 under the
+applied moment of 100 at x = 2, consistent with their figure; this value
+does not change with the mesh because it comes from element equilibrium.
+Note that their "vertical shear", :math:`-EI\,w''' + k_1 w'`, includes the
+force carried by the shear layer, whereas
+:meth:`~ebbef2p.results.Solution.shear_force` returns the shear force in
+the beam alone, :math:`-EI\,w'''`.
