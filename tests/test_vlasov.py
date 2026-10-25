@@ -13,16 +13,19 @@ L, E, I = 100.0, 432000.0, 2.25
 SOIL = VlasovSoil(E_top=E/3000, nu=0.2, depth=L/4)
 
 
-def center_load():
-    return Model().add_beam(0, L, E, I).add_point_load(L/2, force=20)
+def center_load(soil_beyond_ends=True):
+    m = Model(soil_beyond_ends=soil_beyond_ends)
+    return m.add_beam(0, L, E, I).add_point_load(L/2, force=20)
 
 
-def end_loads():
-    return Model().add_beam(0, L, E, I).add_point_load(0, force=20).add_point_load(L, force=20)
+def end_loads(soil_beyond_ends=True):
+    m = Model(soil_beyond_ends=soil_beyond_ends)
+    return m.add_beam(0, L, E, I).add_point_load(0, force=20).add_point_load(L, force=20)
 
 
-def uniform_load():
-    return Model().add_beam(0, L, E, I).add_distributed_load(0, L, 3)
+def uniform_load(soil_beyond_ends=True):
+    m = Model(soil_beyond_ends=soil_beyond_ends)
+    return m.add_beam(0, L, E, I).add_distributed_load(0, L, 3)
 
 
 @pytest.mark.parametrize("model, gamma_ref", [
@@ -41,13 +44,13 @@ def test_soil_beyond_ends_matters_for_uniform_load():
     settles almost rigidly; with it, the ends settle markedly less."""
     ratio = {}
     for flag in (True, False):
-        s = solve_vlasov(uniform_load(), SOIL, soil_beyond_ends=flag).solution
+        s = solve_vlasov(uniform_load(flag), SOIL).solution
         ratio[flag] = s.w[0]/s.w[len(s.w)//2]
     assert ratio[False] == pytest.approx(1.0, abs=0.01)
     assert ratio[True] < 0.8
 
 
-@pytest.mark.parametrize("gamma", [0.3, 1.0, 2.5])
+@pytest.mark.parametrize("gamma", [1e-8, 1e-4, 1e-2, 0.1, 0.29, 0.3, 1.0, 2.5])
 @pytest.mark.parametrize("E_bottom", [None, 400.0])
 def test_closed_form_parameters_match_quadrature(gamma, E_bottom):
     soil = VlasovSoil(E_top=150.0, nu=0.3, depth=12.0, E_bottom=E_bottom)
@@ -64,11 +67,41 @@ def test_closed_form_parameters_match_quadrature(gamma, E_bottom):
     def dphi(z):
         return -gamma/H*np.cosh(gamma*(1 - z/H))/np.sinh(gamma)
 
-    k_ref = (1 - nu)/((1 + nu)*(1 - 2*nu))*quad(lambda z: E_z(z)*dphi(z)**2, 0, H)[0]
-    g_ref = 1/(2*(1 + nu))*quad(lambda z: E_z(z)*phi(z)**2, 0, H)[0]
+    def integral(f):
+        return quad(f, 0, H, epsabs=0, epsrel=1e-13)[0]
+
+    k_ref = (1 - nu)/((1 + nu)*(1 - 2*nu))*integral(lambda z: E_z(z)*dphi(z)**2)
+    g_ref = 1/(2*(1 + nu))*integral(lambda z: E_z(z)*phi(z)**2)
     k, g = soil.parameters(gamma)
-    assert k == pytest.approx(k_ref, rel=1e-10)
-    assert g == pytest.approx(g_ref, rel=1e-10)
+    assert k == pytest.approx(k_ref, rel=1e-12)
+    assert g == pytest.approx(g_ref, rel=1e-12)
+
+
+def test_parameters_tend_to_linear_decay_as_gamma_vanishes():
+    """For gamma -> 0, phi(z) = 1 - z/H and the parameters have closed
+    limits: k = E_oed/H and g = E*H/(6(1+nu)) for a homogeneous layer."""
+    soil = VlasovSoil(E_top=144.0, nu=0.2, depth=5.0)
+    E_oed = 144.0*0.8/(1.2*0.6)
+    for gamma in (0.0, 1e-12):
+        k, g = soil.parameters(gamma)
+        assert k == pytest.approx(E_oed/5.0, rel=1e-14)
+        assert g == pytest.approx(144.0*5.0/(6*1.2), rel=1e-14)
+
+
+def test_rigid_settlement_gives_vanishing_gamma():
+    """A free beam under uniform load with no soil beyond the ends settles
+    uniformly, so w' = 0, gamma -> 0 and g must stay finite and correct."""
+    m = Model().add_beam(0, 10, E=30e6, I=0.02).add_distributed_load(0, 10, 10)
+    r = solve_vlasov(m, VlasovSoil(E_top=144.0, nu=0.2, depth=5.0))
+    assert r.gamma < 1e-6
+    assert r.g == pytest.approx(100.0, rel=1e-10)
+    assert r.solution.w == pytest.approx(10/r.k)
+
+
+def test_soil_beyond_ends_is_taken_from_the_model():
+    for flag in (True, False):
+        r = solve_vlasov(center_load(flag), SOIL)
+        assert r.solution.model.soil_beyond_ends is flag
 
 
 def test_model_with_foundation_is_rejected():
@@ -80,4 +113,4 @@ def test_model_with_foundation_is_rejected():
 def test_input_model_is_not_modified():
     m = center_load()
     solve_vlasov(m, SOIL)
-    assert m.foundation == [] and m.soil_beyond_ends is False
+    assert m.foundation == [] and m.soil_beyond_ends is True

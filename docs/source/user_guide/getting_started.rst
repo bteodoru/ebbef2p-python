@@ -85,6 +85,9 @@ When the soil is described as an elastic layer rather than by ``k`` and
     result = solve_vlasov(model_without_foundation, soil)
     result.gamma, result.k, result.g, result.solution
 
+The layer continues beyond the beam ends only if the model was created with
+``Model(soil_beyond_ends=True)``.
+
 Quick plots
 -----------
 

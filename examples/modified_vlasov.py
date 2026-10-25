@@ -8,7 +8,7 @@ from ebbef2p import Model, VlasovSoil, solve_vlasov
 
 L, E, I = 100.0, 432000.0, 2.25
 
-model = Model()
+model = Model(soil_beyond_ends=True)
 model.add_beam(0, L, E=E, I=I)
 model.add_distributed_load(0, L, 3.0)
 

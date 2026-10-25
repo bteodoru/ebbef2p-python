@@ -79,4 +79,17 @@ than the tolerance. Convergence usually takes 5 to 10 iterations.
    while omitting the end springs gives a beam that settles almost rigidly
    under uniform load and a :math:`\gamma` about 26 % too high for the
    uniform-load case of Vallabhan & Das. Both are controlled together by
-   the ``soil_beyond_ends`` argument.
+   ``Model(soil_beyond_ends=...)``; :func:`~ebbef2p.vlasov.solve_vlasov`
+   reads the flag from the model and has no separate option for it.
+
+Small values of :math:`\gamma`
+-------------------------------
+
+When the beam settles almost uniformly, :math:`w' \to 0` and
+:math:`\gamma \to 0`; the decay function tends to :math:`\phi(z) = 1 - z/H`
+and, for a homogeneous layer, :math:`k \to E(1-\nu)/((1+\nu)(1-2\nu)H)`
+and :math:`g \to E H/(6(1+\nu))`. The closed forms above cancel badly in
+this limit (the relative error of :math:`g` grows like
+:math:`10^{-16}/\gamma^4`), so for :math:`\gamma < 0.3` their Taylor series
+in :math:`\gamma^2`, up to :math:`\gamma^{14}`, is used instead. Both agree
+to :math:`10^{-15}` at the switch.

@@ -46,7 +46,8 @@ A modified Vlasov foundation is defined by the soil layer instead:
 ```python
 from ebbef2p import Model, VlasovSoil, solve_vlasov
 
-model = Model().add_beam(0, 100, E=432000, I=2.25).add_distributed_load(0, 100, 3)
+model = Model(soil_beyond_ends=True)
+model.add_beam(0, 100, E=432000, I=2.25).add_distributed_load(0, 100, 3)
 result = solve_vlasov(model, VlasovSoil(E_top=144, nu=0.2, depth=25))
 print(result.gamma, result.k, result.g)
 ```
