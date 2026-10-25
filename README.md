@@ -57,7 +57,10 @@ the `examples` folder.
 
 ## Development
 
+The project uses [uv](https://docs.astral.sh/uv/):
+
 ```
-pip install -e .[plot]
-pytest
+uv sync          # environment with the package and the dev tools
+uv run pytest    # tests/unit and tests/verification
+uv run ruff check .
 ```

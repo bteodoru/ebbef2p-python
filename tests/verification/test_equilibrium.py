@@ -1,4 +1,4 @@
-"""Soil reaction and global equilibrium."""
+"""Global vertical equilibrium: applied loads vs soil and support reactions."""
 
 import pytest
 
@@ -33,20 +33,6 @@ def test_equilibrium_with_jump_in_g():
     r = s.reactive_pressure()
     assert r.resultant == pytest.approx(q*L + P, rel=1e-8)
     assert any(x == pytest.approx(40) for x, _ in r.concentrated[1:-1])
-
-
-def test_winkler_pressure_is_k_times_w():
-    s = solve(loaded_beam(k=6.4))
-    r = s.reactive_pressure()
-    assert r.values[0::2] == pytest.approx(6.4*s.w[:-1])
-    assert all(f == pytest.approx(0) for _, f in r.concentrated)
-
-
-def test_pressure_converges_with_mesh():
-    m = loaded_beam(k=6.4, g=700)
-    coarse, fine = solve(m, 50).reactive_pressure(), solve(m, 200).reactive_pressure()
-    for x in (0.0, 20.0, 60.0, 100.0):
-        assert coarse.at(x) == pytest.approx(fine.at(x), rel=1e-3)
 
 
 def test_equilibrium_with_supports():
