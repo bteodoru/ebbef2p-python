@@ -86,10 +86,33 @@ see *Migrating from 0.0.x* below.
 | `get_bending_moments()`, `get_shear_forces()` | `solution.bending_moment()`, `solution.shear_force()` |
 | `compute_elastic_foundation_parameters({'E1':…, 'E2':…}, nu, H)` | `solve_vlasov(m, VlasovSoil(E_top, nu, H, E_bottom))` |
 
-## [0.0.2.dev1] - 2020
+## [0.0.3.dev0] - 2020-05-25
 
-First Python version: the `Structure` class, Winkler and two-parameter
-foundations, the modified Vlasov iteration.
+- Foundation input reworked: `soil_conditions` became `elastic_foundation`,
+  `elastic_foundation_support` was removed; `Structure` and the Vlasov
+  parameters revised; the iteration for gamma
+  (`Structure.compute_elastic_foundation_parameters`) and `example.py`
+  added.
+- Tests for the simply supported beam, the long beam on a Winkler
+  foundation, a beam on a two-parameter foundation and the Vlasov
+  parameters (replacing the first tests).
 
-[1.0.0]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.2...HEAD
-[0.0.2.dev1]: https://github.com/bteodoru/ebbef2p-python/releases/tag/v0.0.2
+## [0.0.2.dev1] - 2020-04-22
+
+- First tests (`Beam`, `Structure`), Travis CI with coverage,
+  `requirements.txt`, documentation updates.
+
+## [0.0.1.dev1] - 2020-04-21
+
+First Python version: the `Structure` class, beams on Winkler and
+two-parameter foundations, and the modified Vlasov formulas for `k`, `t`
+and gamma.
+
+The 0.0.x versions were tagged retroactively in 2026 on the commits whose
+code matches the sdists published on PyPI; the version number in
+`setup.py` was not always committed at the time.
+
+[1.0.0]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.3.dev0...HEAD
+[0.0.3.dev0]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.2.dev1...v0.0.3.dev0
+[0.0.2.dev1]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.1.dev1...v0.0.2.dev1
+[0.0.1.dev1]: https://github.com/bteodoru/ebbef2p-python/releases/tag/v0.0.1.dev1
