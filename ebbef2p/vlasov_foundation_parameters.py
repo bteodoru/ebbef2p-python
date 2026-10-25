@@ -1,5 +1,8 @@
 import numpy as np
 
+# np.trapz was removed in NumPy 2.0; np.trapezoid exists from NumPy 2.0 on.
+_trapezoid = getattr(np, 'trapezoid', None) or getattr(np, 'trapz')
+
 class VlasovFoundationParameters():
 
     def __init__(self, Edef, nu, depth, gamma):
@@ -22,14 +25,31 @@ class VlasovFoundationParameters():
    # def get_gamma_0(self, displacements, coords):
       #  return self.depth*np.sqrt(((1-2*self.nu)/(2*(1-self.nu)))*(np.trapz([theta*theta for theta in displacements['rotations']], coords)/np.trapz([w*w for w in displacements['vertical_displacements']], coords)))
 
-    def get_gamma(self, displacements, coords, k, t):
+    def get_gamma(self, displacements, coords, k, t, soil_beyond_ends=True):
         
         #return self.depth*np.sqrt(((1-2*self.nu)/(2*(1-self.nu)))*((np.trapz([theta*theta for theta in displacements['rotations']], coords) +  0.5*np.sqrt(k/t)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2))/(0.5*np.sqrt(t/k)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2) + np.trapz([w*w for w in displacements['vertical_displacements']], coords))))
         #return self.depth*np.sqrt( ( (1-2*self.nu) * (np.trapz([theta*theta for theta in displacements['rotations']], coords) + 0.5*np.sqrt(k/t)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2)) ) / ( (2*(1-self.nu)) *  (np.trapz([w*w for w in displacements['vertical_displacements']], coords) + 0.5*np.sqrt(t/k)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2)) )  )
-        return self.depth*np.sqrt( ( (1-2*self.nu) * (np.trapz([theta*theta for theta in displacements['rotations']], coords) 
-        + 0.5*np.sqrt(k/t)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2)) ) / 
-        ( (2*(1-self.nu)) *  (np.trapz([w*w for w in displacements['vertical_displacements']], coords) 
-        + 0.5*np.sqrt(t/k)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2)) )  )
+        """Update gamma (Vallabhan & Das, 1991).
+
+        ``t`` is the second foundation parameter as used throughout the
+        package, i.e. 2t in Vlasov's notation. When ``soil_beyond_ends`` is
+        True the soil is assumed to extend indefinitely beyond both beam
+        ends, where the surface deflection decays as w_end*exp(-sqrt(k/2t)*x);
+        the corresponding terms are added to both integrals. This must match
+        the boundary treatment used in the stiffness matrix.
+        """
+        w = np.asarray(displacements['vertical_displacements'], dtype=float)
+        theta = np.asarray(displacements['rotations'], dtype=float)
+        coords = np.asarray(coords, dtype=float)
+
+        num = _trapezoid(theta**2, coords)
+        den = _trapezoid(w**2, coords)
+        if soil_beyond_ends:
+            ends = w[0]**2 + w[-1]**2
+            num += 0.5*np.sqrt(k/t)*ends
+            den += 0.5*np.sqrt(t/k)*ends
+
+        return self.depth*np.sqrt(((1 - 2*self.nu)*num)/((2*(1 - self.nu))*den))
 
  #(np.trapz([theta*theta for theta in displacements['rotations']], coords) + 0.5*np.sqrt(k/t)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2))
  #(np.trapz([w*w for w in displacements['vertical_displacements']], coords) + 0.5*np.sqrt(t/k)*((displacements['vertical_displacements'][0])**2 + (displacements['vertical_displacements'][-1])**2))

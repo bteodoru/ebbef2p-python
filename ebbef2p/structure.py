@@ -33,6 +33,12 @@ class Structure():
         self.elements = []
         self.u = []
         self.forces = []
+        # If True, the soil continues indefinitely beyond both beam ends and
+        # is represented by an equivalent spring sqrt(k*t) at each end node
+        # (t = 2t in Vlasov's notation). Default False keeps the previous
+        # behaviour for user-defined foundations; the modified Vlasov
+        # procedure switches it on by default.
+        self.soil_beyond_ends = False
         #self.qn = []
 
 
@@ -109,31 +115,41 @@ class Structure():
 
         self.elements = elements
 
-    def compute_elastic_foundation_parameters(self, Edef, nu, depth):
+    def compute_elastic_foundation_parameters(self, Edef, nu, depth,
+                                              soil_beyond_ends=True,
+                                              tol=1e-4, max_iter=100):
+        """Iterate the modified Vlasov parameters (Vallabhan & Das, 1991).
 
-        gamma = 1
-        gamma_it = []
+        ``soil_beyond_ends`` controls whether the soil continues beyond the
+        beam ends. The same assumption is applied consistently to the
+        stiffness matrix (end springs) and to the gamma update.
+        """
+        self.soil_beyond_ends = soil_beyond_ends
+        x0 = min(b.coord[0] for b in self.beams)
+        x1 = max(b.coord[1] for b in self.beams)
+
+        gamma = 1.0
         parameters = []
-        while gamma > 0:
-           # print(gamma)
+        for _ in range(max_iter):
             vlasov_parameters = VlasovFoundationParameters(Edef, nu, depth, gamma)
-            gamma_it.append(gamma)
             parameters.append(vlasov_parameters)
             self.elastic_foundation = []
-            self.add_elastic_foundation([vlasov_parameters.k, vlasov_parameters.k], [0, sum([b.length for b in self.beams])], 'k')
-            self.add_elastic_foundation([vlasov_parameters.t, vlasov_parameters.t], [0, sum([b.length for b in self.beams])], 't')
-             
+            self.add_elastic_foundation([vlasov_parameters.k, vlasov_parameters.k], [x0, x1], 'k')
+            self.add_elastic_foundation([vlasov_parameters.t, vlasov_parameters.t], [x0, x1], 't')
+
             self.add_elements(self.nodes)
             self.solve(self.build_global_matrix(), self.build_load_vector(), self.get_boudary_conditions())
 
-            #gamma = vlasov_parameters.get_gamma(self.get_displacements(), self.nodes)
-            gamma = vlasov_parameters.get_gamma(self.get_displacements(), self.nodes, vlasov_parameters.k, vlasov_parameters.t)
-            #gamma_it.append(gamma)
-            #print(gamma_it)
-            if len(gamma_it) > 2:
-                    if abs(gamma_it[-2]-gamma_it[-1]) < 0.0001:
-                        break
-        
+            new_gamma = vlasov_parameters.get_gamma(
+                self.get_displacements(), self.nodes,
+                vlasov_parameters.k, vlasov_parameters.t,
+                soil_beyond_ends=soil_beyond_ends)
+            if abs(new_gamma - gamma) < tol:
+                break
+            gamma = new_gamma
+        else:
+            raise RuntimeError(f"gamma did not converge in {max_iter} iterations")
+
         return parameters
 
 
@@ -146,7 +162,105 @@ class Structure():
             # ke = flexural_stiffness(element)
             K[e*2:e*2+4, e*2:e*2+4] += element.stiffness
 
+        if self.soil_beyond_ends:
+            k_left, k_right = self.end_spring_stiffness()
+            K[0, 0] += k_left
+            K[-2, -2] += k_right
+
         return K
+
+    def end_spring_stiffness(self):
+        """Equivalent springs for the soil beyond the beam ends.
+
+        For a two-parameter foundation extending to infinity, the surface
+        deflection outside the beam decays as w_end*exp(-sqrt(k/t)*x), and
+        the soil there reacts on the beam end with a concentrated force
+        sqrt(k*t)*w_end (t = 2t in Vlasov's notation). Returns the spring
+        stiffnesses at the left and right end nodes.
+        """
+        first, last = self.elements[0], self.elements[-1]
+        return (np.sqrt(first.k[0]*first.t[0]), np.sqrt(last.k[1]*last.t[1]))
+
+    def get_reactive_pressure(self):
+        """Soil reaction under the beam.
+
+        Distributed pressure, evaluated at both ends of every element
+        (values on either side of a node are kept, as for bending moments):
+
+            p = k*w - d/dx(t*dw/dx) = k*w - t*w'' - t'*w'
+
+        with t = 2t in Vlasov's notation and w'' taken from the Hermite
+        interpolation of each element (linear within the element).
+
+        Concentrated forces arise where the shear layer is cut:
+          * at the beam ends, -t*w'(x0) and +t*w'(x1) (boundary terms of the
+            weak form), plus sqrt(k*t)*w_end if the soil continues beyond the
+            ends;
+          * at interior nodes where t jumps, the jump of t*w'.
+
+        Positive values act against the applied loads (compression).
+        The distributed resultant plus all concentrated forces equals the
+        total soil reaction, which balances the applied loads minus the
+        support reactions.
+
+        Returns
+        -------
+        dict with keys
+            coords, values : distributed pressure at element ends
+            concentrated   : list of (x, force)
+            resultant      : integral of p plus all concentrated forces
+        """
+        u = np.asarray(self.u, dtype=float).flatten()
+        gauss_x, gauss_w = np.polynomial.legendre.leggauss(4)
+        coords, values = [], []
+        flux_start, flux_end = [], []  # t*w' at element start / end
+        resultant = 0.0
+
+        for e, el in enumerate(self.elements):
+            d = u[2*e:2*e+4]
+            l = el.length
+            ki, kj = el.k
+            ti, tj = el.t
+            dt = (tj - ti)/l
+
+            def curvature(xi):
+                return np.array([(-6 + 12*xi)/l**2, (-4 + 6*xi)/l,
+                                 (6 - 12*xi)/l**2, (-2 + 6*xi)/l]) @ d
+
+            wi, thi, wj, thj = d
+            coords += [el.coord[0], el.coord[1]]
+            values += [ki*wi - ti*curvature(0.0) - dt*thi,
+                       kj*wj - tj*curvature(1.0) - dt*thj]
+            flux_start.append(ti*thi)
+            flux_end.append(tj*thj)
+
+            # integral of p over the element: k*w by Gauss quadrature (exact
+            # for cubic w times linear k); -(t*w')' integrates to -[t*w'].
+            for xg, wg in zip(gauss_x, gauss_w):
+                xi = 0.5*(xg + 1)
+                N = np.array([1 - 3*xi**2 + 2*xi**3, l*xi*(1 - xi)**2,
+                              3*xi**2 - 2*xi**3, l*(xi**3 - xi**2)])
+                resultant += 0.5*l*wg*(ki + (kj - ki)*xi)*(N @ d)
+            resultant -= tj*thj - ti*thi
+
+        x0, x1 = self.elements[0].coord[0], self.elements[-1].coord[1]
+        f0, f1 = -flux_start[0], flux_end[-1]
+        if self.soil_beyond_ends:
+            k_left, k_right = self.end_spring_stiffness()
+            f0 += k_left*u[0]
+            f1 += k_right*u[-2]
+
+        concentrated = [(x0, f0)]
+        for e in range(len(self.elements) - 1):
+            jump = flux_end[e] - flux_start[e + 1]
+            if abs(jump) > 1e-12*max(1.0, abs(flux_end[e])):
+                concentrated.append((self.elements[e].coord[1], jump))
+        concentrated.append((x1, f1))
+
+        resultant += sum(f for _, f in concentrated)
+
+        return dict(coords=coords, values=values,
+                    concentrated=concentrated, resultant=resultant)
 
     # def build_global_flexural_matrix(self, elements):
     #     K = np.zeros((2*(len(elements)+1), 2*(len(elements)+1)))
