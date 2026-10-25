@@ -3,10 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 EBBEF2p: finite element analysis of Euler-Bernoulli beams on two-parameter elastic
-foundations (Winkler, Pasternak, modified Vlasov). The package backs an educational web app
-(FastAPI + Vue, separate repo) and is being prepared for publication in SoftwareX, followed by an
-education study in *Computer Applications in Engineering Education*. The manuscript lives outside
-this repo.
+foundations (Winkler, Pasternak, modified Vlasov). The package is also the computational core of
+an educational web application that lives in a separate repository.
 
 Communicate with the user in Romanian; code, comments, docstrings, docs and commit messages are in
 English.
