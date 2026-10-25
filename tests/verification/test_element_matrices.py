@@ -11,7 +11,7 @@ GX, GW = np.polynomial.legendre.leggauss(6)
 
 def integrate(f):
     xi = 0.5*(GX + 1)
-    return 0.5*l*sum(w*f(x) for x, w in zip(xi, GW))
+    return 0.5*l*sum(w*f(x) for x, w in zip(xi, GW, strict=True))
 
 
 def test_winkler_matrix():

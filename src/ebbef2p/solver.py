@@ -5,35 +5,35 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
+from numpy.typing import NDArray
 
 from . import elements as el
-from .mesh import build_mesh, end_spring_stiffness
+from .exceptions import ModelError, UnstableModelError
+from .mesh import Mesh, build_mesh, end_spring_stiffness
+from .model import Model
 from .results import Solution
 
 
-def element_matrices(mesh):
+def element_matrices(mesh: Mesh) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """Total element stiffness matrices and consistent load vectors.
 
     Returns arrays of shape (n, 4, 4) and (n, 4).
     """
-    n = mesh.n_elements
-    ke = np.empty((n, 4, 4))
-    fe = np.empty((n, 4))
-    for e, l in enumerate(mesh.lengths):
-        ke[e] = (el.bending_stiffness(mesh.EI[e], l)
-                 + el.winkler_stiffness(*mesh.k[e], l)
-                 + el.shear_stiffness(*mesh.g[e], l))
-        fe[e] = el.distributed_load_vector(*mesh.q[e], l)
+    l = mesh.lengths
+    ke = (el.bending_stiffness(mesh.EI, l)
+          + el.winkler_stiffness(mesh.k[:, 0], mesh.k[:, 1], l)
+          + el.shear_stiffness(mesh.g[:, 0], mesh.g[:, 1], l))
+    fe = el.distributed_load_vector(mesh.q[:, 0], mesh.q[:, 1], l)
     return ke, fe
 
 
-def assemble(model, mesh):
+def assemble(model: Model, mesh: Mesh) -> tuple[sp.csr_matrix, NDArray[np.float64],
+                                                NDArray[np.float64], NDArray[np.float64]]:
     """Global stiffness matrix (CSR), load vector and element contributions."""
-    n = mesh.n_elements
-    ndof = 2*(n + 1)
+    ndof = 2*(mesh.n_elements + 1)
     ke, fe = element_matrices(mesh)
 
-    dofs = 2*np.arange(n)[:, None] + np.arange(4)[None, :]
+    dofs = mesh.element_dofs
     rows = np.repeat(dofs, 4, axis=1).ravel()
     cols = np.tile(dofs, (1, 4)).ravel()
     K = sp.coo_matrix((ke.ravel(), (rows, cols)), shape=(ndof, ndof)).tolil()
@@ -54,9 +54,9 @@ def assemble(model, mesh):
     return K.tocsr(), f, ke, fe
 
 
-def constraints(model, mesh):
+def constraints(model: Model, mesh: Mesh) -> tuple[NDArray[np.intp], NDArray[np.float64]]:
     """Prescribed degrees of freedom and their values."""
-    prescribed = {}
+    prescribed: dict[int, float] = {}
     for s in model.supports:
         i = mesh.node_index(s.x)
         for offset, value in ((0, s.w), (1, s.theta)):
@@ -64,14 +64,14 @@ def constraints(model, mesh):
                 continue
             dof = 2*i + offset
             if dof in prescribed and prescribed[dof] != value:
-                raise ValueError(f"conflicting supports at x = {s.x}")
+                raise ModelError(f"conflicting supports at x = {s.x}")
             prescribed[dof] = float(value)
     dofs = np.array(sorted(prescribed), dtype=int)
     values = np.array([prescribed[d] for d in dofs], dtype=float)
     return dofs, values
 
 
-def check_stability(model, mesh, fixed):
+def check_stability(model: Model, mesh: Mesh, fixed: NDArray[np.intp]) -> None:
     """Raise if the beam can move as a rigid body.
 
     A foundation with k > 0 over a finite length restrains both
@@ -84,13 +84,13 @@ def check_stability(model, mesh, fixed):
     theta_nodes = {d // 2 for d in fixed if d % 2 == 1}
     if len(w_nodes) >= 2 or (w_nodes and theta_nodes):
         return
-    raise np.linalg.LinAlgError(
+    raise UnstableModelError(
         "the beam is not sufficiently supported: without a Winkler "
         "parameter k > 0 it needs w prescribed at two points, or w and "
         "theta at one point")
 
 
-def solve(model, n_elements=100):
+def solve(model: Model, n_elements: int = 100) -> Solution:
     """Solve the static problem.
 
     Parameters
@@ -121,7 +121,7 @@ def solve(model, n_elements=100):
         except (spla.MatrixRankWarning, RuntimeError):
             u[free] = np.nan
     if not np.all(np.isfinite(u)):
-        raise np.linalg.LinAlgError(
+        raise UnstableModelError(
             "the system is singular: the beam is not sufficiently supported "
             "(add a foundation or supports)")
 

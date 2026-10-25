@@ -1,8 +1,13 @@
 """Discretisation of a :class:`~ebbef2p.model.Model` into beam elements."""
 
 from dataclasses import dataclass
+from itertools import pairwise
 
 import numpy as np
+from numpy.typing import NDArray
+
+from .exceptions import ModelError
+from .model import Model
 
 
 @dataclass(frozen=True)
@@ -18,35 +23,40 @@ class Mesh:
     q : (n, 2) array
         Distributed load at the start and end of every element.
     """
-    nodes: np.ndarray
-    EI: np.ndarray
-    k: np.ndarray
-    g: np.ndarray
-    q: np.ndarray
+    nodes: NDArray[np.float64]
+    EI: NDArray[np.float64]
+    k: NDArray[np.float64]
+    g: NDArray[np.float64]
+    q: NDArray[np.float64]
 
     @property
-    def n_elements(self):
+    def n_elements(self) -> int:
         return len(self.nodes) - 1
 
     @property
-    def lengths(self):
+    def lengths(self) -> NDArray[np.float64]:
         return np.diff(self.nodes)
 
-    def node_index(self, x, tol=1e-9):
+    @property
+    def element_dofs(self) -> NDArray[np.intp]:
+        """Global degrees of freedom of every element, shape (n, 4)."""
+        return 2*np.arange(self.n_elements)[:, None] + np.arange(4)[None, :]
+
+    def node_index(self, x: float, tol: float = 1e-9) -> int:
         """Index of the node at ``x`` (raises if there is none)."""
         span = self.nodes[-1] - self.nodes[0]
         i = int(np.argmin(np.abs(self.nodes - x)))
         if abs(self.nodes[i] - x) > tol*max(1.0, span):
-            raise ValueError(f"no node at x = {x}")
+            raise ModelError(f"no node at x = {x}")
         return i
 
-    def element_at(self, x):
+    def element_at(self, x: float | NDArray[np.float64]) -> NDArray[np.intp]:
         """Index of the element containing ``x`` (right-continuous)."""
-        i = int(np.searchsorted(self.nodes, x, side='right')) - 1
-        return min(max(i, 0), self.n_elements - 1)
+        i = np.searchsorted(self.nodes, x, side='right') - 1
+        return np.clip(i, 0, self.n_elements - 1)
 
 
-def end_spring_stiffness(mesh):
+def end_spring_stiffness(mesh: Mesh) -> tuple[float, float]:
     """Springs representing the foundation beyond each beam end.
 
     For a two-parameter foundation extending to infinity, the surface
@@ -62,7 +72,7 @@ def _interp_segment(x, x0, x1, v0, v1):
     return v0 + (v1 - v0)*(x - x0)/(x1 - x0)
 
 
-def build_mesh(model, n_elements=100):
+def build_mesh(model: Model, n_elements: int = 100) -> Mesh:
     """Mesh the model with roughly ``n_elements`` elements.
 
     Every key point of the model (segment ends, loads, supports) becomes a
@@ -73,9 +83,9 @@ def build_mesh(model, n_elements=100):
     x_start, x_end = model.extent
     h = (x_end - x_start)/max(int(n_elements), 1)
 
-    pts = np.array(model.key_points())
+    pts = model.key_points()
     nodes = [pts[0]]
-    for a, b in zip(pts[:-1], pts[1:]):
+    for a, b in pairwise(pts):
         n = max(1, int(np.ceil((b - a)/h - 1e-9)))
         nodes.extend(np.linspace(a, b, n + 1)[1:])
     nodes = np.array(nodes)

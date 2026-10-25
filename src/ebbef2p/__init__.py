@@ -1,13 +1,24 @@
 """EBBEF2p: Euler-Bernoulli beams on two-parameter elastic foundations."""
 
+from .exceptions import ConvergenceError, EBBEF2pError, ModelError, UnstableModelError
 from .model import Model
+from .results import ElementEndValues, ReactivePressure, Solution
 from .solver import solve
-from .results import Solution, ReactivePressure, ElementEndValues
-from .vlasov import VlasovSoil, VlasovResult, solve_vlasov
+from .vlasov import VlasovResult, VlasovSoil, solve_vlasov
 
 __all__ = [
-    "Model", "solve", "Solution", "ReactivePressure", "ElementEndValues",
-    "VlasovSoil", "VlasovResult", "solve_vlasov",
+    "ConvergenceError",
+    "EBBEF2pError",
+    "ElementEndValues",
+    "Model",
+    "ModelError",
+    "ReactivePressure",
+    "Solution",
+    "UnstableModelError",
+    "VlasovResult",
+    "VlasovSoil",
+    "solve",
+    "solve_vlasov",
 ]
 
 __version__ = "1.0.0.dev0"

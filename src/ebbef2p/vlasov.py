@@ -17,11 +17,12 @@ non-dimensional decay parameter ``gamma``:
 """
 
 from dataclasses import dataclass, field, replace
-from typing import List, Optional
 
 import numpy as np
 
-from . import elements as el
+from .exceptions import ConvergenceError, ModelError
+from .model import Model
+from .results import _GAUSS_W, _GAUSS_XI, Solution
 from .solver import solve
 
 # Taylor coefficients in powers of gamma**2 (up to gamma**14) of the four
@@ -56,17 +57,17 @@ class VlasovSoil:
     E_top: float
     nu: float
     depth: float
-    E_bottom: Optional[float] = None
+    E_bottom: float | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not 0 <= self.nu < 0.5:
-            raise ValueError("nu must satisfy 0 <= nu < 0.5")
+            raise ModelError("nu must satisfy 0 <= nu < 0.5")
         if self.depth <= 0 or self.E_top <= 0:
-            raise ValueError("depth and E_top must be positive")
+            raise ModelError("depth and E_top must be positive")
         if self.E_bottom is not None and self.E_bottom <= 0:
-            raise ValueError("E_bottom must be positive")
+            raise ModelError("E_bottom must be positive")
 
-    def parameters(self, gamma):
+    def parameters(self, gamma: float) -> tuple[float, float]:
         """Foundation parameters ``(k, g)`` for a given ``gamma`` (g = 2t).
 
         Below ``_SERIES_GAMMA`` the closed forms lose accuracy to
@@ -90,7 +91,8 @@ class VlasovSoil:
         g = H/(1 + nu)*(E1*gA + (E2 - E1)*gB)
         return float(k), float(g)
 
-    def gamma_from_deflection(self, solution, k, g, soil_beyond_ends):
+    def gamma_from_deflection(self, solution: Solution, k: float, g: float,
+                              soil_beyond_ends: bool) -> float:
         """Update gamma from a deflected shape (Vallabhan & Das, 1991).
 
             (gamma/H)^2 = (1-2nu)/(2(1-nu)) * int w'^2 dx / int w^2 dx
@@ -98,16 +100,9 @@ class VlasovSoil:
         with the integrals extended beyond the beam ends when the soil
         continues there (w decays as w_end*exp(-sqrt(k/g)*s)).
         """
-        mesh = solution.mesh
-        gx, gw = np.polynomial.legendre.leggauss(4)
-        xi = 0.5*(gx + 1)
-        int_w2 = int_dw2 = 0.0
-        for e, l in enumerate(mesh.lengths):
-            d = solution.u[2*e:2*e + 4]
-            w = el.shape_functions(xi, l).T @ d
-            dw = el.shape_function_derivatives(xi, l, 1).T @ d
-            int_w2 += 0.5*l*np.sum(gw*w**2)
-            int_dw2 += 0.5*l*np.sum(gw*dw**2)
+        half_l = 0.5*solution.mesh.lengths
+        int_w2 = float(half_l @ (solution.element_field(_GAUSS_XI)**2 @ _GAUSS_W))
+        int_dw2 = float(half_l @ (solution.element_field(_GAUSS_XI, order=1)**2 @ _GAUSS_W))
         if soil_beyond_ends:
             ends = solution.w[0]**2 + solution.w[-1]**2
             alpha = np.sqrt(k/g)
@@ -120,21 +115,22 @@ class VlasovSoil:
 @dataclass
 class VlasovResult:
     """Outcome of :func:`solve_vlasov`."""
-    solution: object
+    solution: Solution
     soil: VlasovSoil
     gamma: float
     k: float
     g: float
-    history: List[float] = field(default_factory=list)
+    history: list[float] = field(default_factory=list)
 
     @property
-    def t(self):
+    def t(self) -> float:
         """Vlasov's t (the second parameter is g = 2t)."""
         return 0.5*self.g
 
 
-def solve_vlasov(model, soil, n_elements=100, gamma0=1.0, tol=1e-6,
-                 max_iter=100):
+def solve_vlasov(model: Model, soil: VlasovSoil, n_elements: int = 100,
+                 gamma0: float = 1.0, tol: float = 1e-6,
+                 max_iter: int = 100) -> VlasovResult:
     """Solve a beam on a modified Vlasov foundation.
 
     The foundation parameters are uniform along the beam and are found
@@ -156,12 +152,12 @@ def solve_vlasov(model, soil, n_elements=100, gamma0=1.0, tol=1e-6,
     VlasovResult
     """
     if model.foundation:
-        raise ValueError("solve_vlasov defines the foundation itself; "
+        raise ModelError("solve_vlasov defines the foundation itself; "
                          "remove the foundation segments from the model")
     x0, x1 = model.extent
     beyond = model.soil_beyond_ends
 
-    def solve_with(gamma):
+    def solve_with(gamma: float) -> tuple[Solution, float, float]:
         k, g = soil.parameters(gamma)
         trial = replace(model, foundation=[])
         trial.add_foundation(x0, x1, k=k, g=g)
@@ -177,5 +173,5 @@ def solve_vlasov(model, soil, n_elements=100, gamma0=1.0, tol=1e-6,
             solution, k, g = solve_with(new_gamma)
             return VlasovResult(solution, soil, new_gamma, k, g, history)
         gamma = new_gamma
-    raise RuntimeError(f"gamma did not converge in {max_iter} iterations "
+    raise ConvergenceError(f"gamma did not converge in {max_iter} iterations "
                        f"(last values: {history[-3:]})")

@@ -41,6 +41,17 @@ Element matrices
 .. automodule:: ebbef2p.elements
    :members:
 
+Exceptions
+----------
+
+All errors raised by the package derive from
+:class:`~ebbef2p.exceptions.EBBEF2pError` and also from the matching
+built-in exception, so they can be caught either way.
+
+.. automodule:: ebbef2p.exceptions
+   :members:
+   :show-inheritance:
+
 Plotting
 --------
 
