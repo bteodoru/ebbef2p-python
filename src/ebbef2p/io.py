@@ -25,11 +25,17 @@ A :class:`~ebbef2p.vlasov.VlasovSoil` is written in the same way::
     {"format": "ebbef2p-vlasov-soil", "version": 1,
      "E_top": 144, "nu": 0.2, "depth": 25, "E_bottom": null}
 
+:func:`model_json_schema` and :func:`vlasov_soil_json_schema` give JSON Schemas
+(draft 2020-12) of both formats, generated from the dataclasses: every field
+is described by its ``doc`` and its dimension (see :mod:`ebbef2p.dimensions`).
+They check the structure only; values are checked when the model is built.
+
 Use :mod:`json` to turn the dictionaries into text. Inside the package import
 this module as ``from . import io as model_io`` so that it is never confused
 with the standard library module.
 """
 
+import copy
 import dataclasses
 import math
 import typing
@@ -224,3 +230,61 @@ def vlasov_soil_from_dict(data: Mapping[str, Any]) -> VlasovSoil:
         return VlasovSoil(**kwargs)
     except ModelError as err:
         raise ModelError(f"soil: {err}") from err
+
+
+# -- JSON Schema ------------------------------------------------------------
+_SCHEMA_DIALECT = "https://json-schema.org/draft/2020-12/schema"
+_NUMBER = {"type": "number"}
+_JSON_TYPES: dict[Kind, dict[str, Any]] = {
+    "number": _NUMBER,
+    "number_or_null": {"type": ["number", "null"]},
+    "pair": {"oneOf": [_NUMBER, {"type": "array", "items": _NUMBER,
+                                 "minItems": 2, "maxItems": 2}]},
+    "boolean": {"type": "boolean"},
+}
+
+
+def _description(f: dataclasses.Field) -> str:
+    dimension = f.metadata.get("dimension")
+    return f"{f.metadata['doc']} [{dimension}]" if dimension else f.metadata["doc"]
+
+
+def _object_schema(cls: type) -> dict[str, Any]:
+    properties = {}
+    for f, kind in _serialized_fields(cls):
+        prop = {**copy.deepcopy(_JSON_TYPES[kind]), "description": _description(f)}
+        if f.default is not dataclasses.MISSING:
+            prop["default"] = list(f.default) if isinstance(f.default, tuple) else f.default
+        properties[f.name] = prop
+    return {"type": "object", "description": cls.__doc__.splitlines()[0],
+            "properties": properties,
+            "required": [f.name for f, _ in _serialized_fields(cls) if _required(f)],
+            "additionalProperties": False}
+
+
+def _header_schema(fmt: str) -> dict[str, Any]:
+    return {"format": {"const": fmt, "description": "format name (optional on input)"},
+            "version": {"const": FORMAT_VERSION,
+                        "description": "format version (optional on input)"}}
+
+
+def model_json_schema() -> dict[str, Any]:
+    """JSON Schema (draft 2020-12) of the dictionaries read by :func:`model_from_dict`."""
+    beyond = next(f for f in dataclasses.fields(Model) if f.name == "soil_beyond_ends")
+    properties = {**_header_schema(MODEL_FORMAT),
+                  "soil_beyond_ends": {"type": "boolean", "default": beyond.default,
+                                       "description": _description(beyond)}}
+    for key, (cls, _) in _SECTIONS.items():
+        properties[key] = {"type": "array", "items": _object_schema(cls), "default": []}
+    return {"$schema": _SCHEMA_DIALECT, "title": "EBBEF2p model", "type": "object",
+            "description": "Beam on a two-parameter elastic foundation. No units are built "
+                           "in: use any consistent set (e.g. kN and m). Dimensions are given "
+                           "in brackets as powers of force F and length L.",
+            "properties": properties, "additionalProperties": False}
+
+
+def vlasov_soil_json_schema() -> dict[str, Any]:
+    """JSON Schema (draft 2020-12) of the dictionaries read by :func:`vlasov_soil_from_dict`."""
+    schema = _object_schema(VlasovSoil)
+    schema["properties"] = {**_header_schema(VLASOV_SOIL_FORMAT), **schema["properties"]}
+    return {"$schema": _SCHEMA_DIALECT, "title": "EBBEF2p modified Vlasov soil", **schema}

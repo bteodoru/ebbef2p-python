@@ -8,14 +8,17 @@ import pathlib
 import re
 import runpy
 
+import jsonschema
 import numpy as np
 import pytest
 
 from ebbef2p import Model, ModelError, VlasovSoil, solve, solve_vlasov
 from ebbef2p.io import (
     model_from_dict,
+    model_json_schema,
     model_to_dict,
     vlasov_soil_from_dict,
+    vlasov_soil_json_schema,
     vlasov_soil_to_dict,
 )
 
@@ -197,3 +200,49 @@ def test_example_vlasov_soil_gives_same_gamma():
 def test_vlasov_soil_errors(data, message):
     with pytest.raises(ModelError, match=re.escape(message)):
         vlasov_soil_from_dict(data)
+
+
+def validator(schema):
+    jsonschema.Draft202012Validator.check_schema(schema)
+    return jsonschema.Draft202012Validator(schema)
+
+
+def test_schema_accepts_every_written_model(model):
+    data = model_to_dict(model)
+    validator(model_json_schema()).validate(data)
+    validator(model_json_schema()).validate(json.loads(json.dumps(data)))
+
+
+def test_schema_accepts_hand_written_input():
+    validator(model_json_schema()).validate(
+        {"beams": [{"x0": 0, "x1": 15, "E": 2000, "I": 1}],
+         "foundation": [{"x0": 0, "x1": 15, "k": 64}]})
+
+
+@pytest.mark.parametrize("change", [
+    lambda d: d.update(extra=1),
+    lambda d: d["beams"][0].update(EE=3),
+    lambda d: d["beams"][0].update(E=True),
+    lambda d: d["foundation"][0].update(k=[1, 2, 3]),
+    lambda d: d.update(version=2),
+    lambda d: d["beams"][0].pop("I"),
+])
+def test_schema_rejects_bad_input(change):
+    data = model_to_dict(razaqpur_example_2())
+    change(data)
+    assert not validator(model_json_schema()).is_valid(data)
+
+
+def test_schema_descriptions_carry_dimensions():
+    beam = model_json_schema()["properties"]["beams"]["items"]
+    assert "F L^-2" in beam["properties"]["E"]["description"]
+    assert "Young" in beam["properties"]["E"]["description"]
+    assert beam["additionalProperties"] is False
+    assert model_json_schema()["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+
+
+@pytest.mark.parametrize("soil", SOILS)
+def test_vlasov_soil_schema(soil):
+    v = validator(vlasov_soil_json_schema())
+    v.validate(vlasov_soil_to_dict(soil))
+    assert not v.is_valid({**vlasov_soil_to_dict(soil), "H": 3})
