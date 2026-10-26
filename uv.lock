@@ -434,7 +434,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "matplotlib", marker = "extra == 'plot'", specifier = ">=3.8" },
+    { name = "matplotlib", marker = "extra == 'plot'", specifier = ">=3.10.7" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "scipy", specifier = ">=1.11.3" },
 ]
@@ -442,7 +442,7 @@ provides-extras = ["plot"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "matplotlib", specifier = ">=3.8" },
+    { name = "matplotlib", specifier = ">=3.10.7" },
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-cov", specifier = ">=5" },
     { name = "ruff", specifier = ">=0.6" },
@@ -451,7 +451,7 @@ dev = [
 docs = [{ name = "sphinx", specifier = ">=7" }]
 lint = [{ name = "ruff", specifier = ">=0.6" }]
 test = [
-    { name = "matplotlib", specifier = ">=3.8" },
+    { name = "matplotlib", specifier = ">=3.10.7" },
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-cov", specifier = ">=5" },
 ]
