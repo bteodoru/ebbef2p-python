@@ -38,7 +38,7 @@ plot = ["matplotlib>=3.10.7"]
 Homepage = "https://github.com/bteodoru/ebbef2p-python"
 Documentation = "https://ebbef2p-python.readthedocs.io"
 Issues = "https://github.com/bteodoru/ebbef2p-python/issues"
-Changelog = "https://github.com/bteodoru/ebbef2p-python/blob/master/CHANGELOG.md"
+Changelog = "https://github.com/bteodoru/ebbef2p-python/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 test = ["pytest>=8", "pytest-cov>=5", "matplotlib>=3.10.7"]

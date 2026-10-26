@@ -4,7 +4,7 @@
 [![tests](https://github.com/bteodoru/ebbef2p-python/actions/workflows/tests.yml/badge.svg)](https://github.com/bteodoru/ebbef2p-python/actions/workflows/tests.yml)
 [![PyPI version](https://badge.fury.io/py/ebbef2p-python.svg)](https://badge.fury.io/py/ebbef2p-python)
 [![Python versions](https://img.shields.io/pypi/pyversions/ebbef2p-python)](https://pypi.org/project/ebbef2p-python/)
-[![GitHub license](https://img.shields.io/github/license/bteodoru/ebbef2p-python)](https://github.com/bteodoru/ebbef2p-python/blob/master/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/bteodoru/ebbef2p-python)](https://github.com/bteodoru/ebbef2p-python/blob/main/LICENSE)
 [![Documentation Status](https://readthedocs.org/projects/ebbef2p-python/badge/?version=latest)](https://ebbef2p-python.readthedocs.io/en/latest/?badge=latest)
 
 EBBEF2p (Euler-Bernoulli Beams on Two-Parameter Elastic Foundations) is a

@@ -24,7 +24,7 @@ extensions = [
     'sphinx.ext.viewcode',
 ]
 autodoc_member_order = 'bysource'
-master_doc = 'index'
+root_doc = 'index'
 language = 'en'
 exclude_patterns = []
 
