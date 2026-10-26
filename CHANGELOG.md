@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-26
+
 ### Added
 
 - `ebbef2p.io`: `model_to_dict` / `model_from_dict` and `vlasov_soil_to_dict` /
@@ -141,7 +143,8 @@ The 0.0.x versions were tagged retroactively in 2026 on the commits whose
 code matches the sdists published on PyPI; the version number in
 `setup.py` was not always committed at the time.
 
-[Unreleased]: https://github.com/bteodoru/ebbef2p-python/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/bteodoru/ebbef2p-python/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/bteodoru/ebbef2p-python/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.3.dev0...v1.0.0
 [0.0.3.dev0]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.2.dev1...v0.0.3.dev0
 [0.0.2.dev1]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.1.dev1...v0.0.2.dev1

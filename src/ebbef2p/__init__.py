@@ -23,4 +23,4 @@ __all__ = [
     "solve_vlasov",
 ]
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
