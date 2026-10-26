@@ -20,6 +20,11 @@ so they are validated exactly as when built in code; errors are
 :class:`~ebbef2p.exceptions.ModelError` with the path of the offending item
 or field in the message, e.g. ``beams[1].E: expected a number, got str``.
 
+A :class:`~ebbef2p.vlasov.VlasovSoil` is written in the same way::
+
+    {"format": "ebbef2p-vlasov-soil", "version": 1,
+     "E_top": 144, "nu": 0.2, "depth": 25, "E_bottom": null}
+
 Use :mod:`json` to turn the dictionaries into text. Inside the package import
 this module as ``from . import io as model_io`` so that it is never confused
 with the standard library module.
@@ -41,8 +46,10 @@ from .model import (
     PointLoad,
     Support,
 )
+from .vlasov import VlasovSoil
 
 MODEL_FORMAT = "ebbef2p-model"
+VLASOV_SOIL_FORMAT = "ebbef2p-vlasov-soil"
 FORMAT_VERSION = 1
 
 _SECTIONS: dict[str, tuple[type, Callable[..., Model]]] = {
@@ -193,3 +200,27 @@ def model_from_dict(data: Mapping[str, Any], validate: bool = True) -> Model:
         except ModelError as err:
             raise ModelError(f"model: {err}") from err
     return model
+
+
+def vlasov_soil_to_dict(soil: VlasovSoil) -> dict[str, Any]:
+    """JSON-ready dictionary of a :class:`~ebbef2p.vlasov.VlasovSoil`."""
+    return {"format": VLASOV_SOIL_FORMAT, "version": FORMAT_VERSION, **_item_to_dict(soil)}
+
+
+def vlasov_soil_from_dict(data: Mapping[str, Any]) -> VlasovSoil:
+    """Build a :class:`~ebbef2p.vlasov.VlasovSoil` from a dictionary.
+
+    Raises
+    ------
+    ModelError
+        With the path of the field in the message (``soil.depth: missing``).
+    """
+    data = _object(data, "soil")
+    header = {key: data[key] for key in ("format", "version") if key in data}
+    _check_header(header, VLASOV_SOIL_FORMAT)
+    fields = {key: value for key, value in data.items() if key not in header}
+    kwargs = _fields_from_dict(VlasovSoil, fields, "soil")
+    try:
+        return VlasovSoil(**kwargs)
+    except ModelError as err:
+        raise ModelError(f"soil: {err}") from err

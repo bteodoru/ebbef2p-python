@@ -11,8 +11,13 @@ import runpy
 import numpy as np
 import pytest
 
-from ebbef2p import Model, ModelError, solve, solve_vlasov
-from ebbef2p.io import model_from_dict, model_to_dict
+from ebbef2p import Model, ModelError, VlasovSoil, solve, solve_vlasov
+from ebbef2p.io import (
+    model_from_dict,
+    model_to_dict,
+    vlasov_soil_from_dict,
+    vlasov_soil_to_dict,
+)
 
 EXAMPLES = pathlib.Path(__file__).parents[2]/"examples"
 
@@ -164,3 +169,31 @@ def test_partial_model_needs_validate_false():
 def test_wrong_containers(data, message):
     with pytest.raises(ModelError, match=re.escape(message)):
         model_from_dict(data)
+
+
+SOILS = [VlasovSoil(144.0, 0.2, 25.0), VlasovSoil(144.0, 0.25, 10.0, E_bottom=300.0)]
+
+
+@pytest.mark.parametrize("soil", SOILS)
+def test_vlasov_soil_round_trip(soil):
+    data = vlasov_soil_to_dict(soil)
+    assert data["format"] == "ebbef2p-vlasov-soil" and data["version"] == 1
+    assert vlasov_soil_from_dict(json.loads(json.dumps(data))) == soil
+
+
+def test_example_vlasov_soil_gives_same_gamma():
+    ns = example("modified_vlasov")
+    soil = vlasov_soil_from_dict(vlasov_soil_to_dict(ns["soil"]))
+    assert soil == ns["soil"]
+    assert solve_vlasov(ns["model"], soil).gamma == solve_vlasov(ns["model"], ns["soil"]).gamma
+
+
+@pytest.mark.parametrize("data, message", [
+    ({"E_top": 144, "nu": 0.5, "depth": 25}, "soil: nu must satisfy"),
+    ({"E_top": 144, "nu": 0.2, "depth": 25, "H": 3}, "soil.H: unknown key"),
+    ({"E_top": 144, "nu": 0.2}, "soil.depth: missing"),
+    ({"E_top": 144, "nu": 0.2, "depth": 25, "format": "ebbef2p-model"}, "format"),
+])
+def test_vlasov_soil_errors(data, message):
+    with pytest.raises(ModelError, match=re.escape(message)):
+        vlasov_soil_from_dict(data)
