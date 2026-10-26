@@ -20,6 +20,7 @@ from dataclasses import dataclass, field, replace
 
 import numpy as np
 
+from .dimensions import DIMENSIONLESS, FORCE, LENGTH, STRESS, quantity
 from .exceptions import ConvergenceError, ModelError
 from .model import Model
 from .results import _GAUSS_W, _GAUSS_XI, Solution
@@ -54,10 +55,11 @@ class VlasovSoil:
     E_bottom : float, optional
         Young's modulus at the base; defaults to ``E_top`` (homogeneous layer).
     """
-    E_top: float
-    nu: float
-    depth: float
-    E_bottom: float | None = None
+    E_top: float = field(metadata=quantity(STRESS, "Young's modulus at the surface"))
+    nu: float = field(metadata=quantity(DIMENSIONLESS, "Poisson's ratio, 0 <= nu < 0.5"))
+    depth: float = field(metadata=quantity(LENGTH, "layer thickness H above the rigid base"))
+    E_bottom: float | None = field(default=None, metadata=quantity(
+        STRESS, "Young's modulus at the base; null means E_top (homogeneous layer)"))
 
     def __post_init__(self) -> None:
         if not 0 <= self.nu < 0.5:
@@ -117,10 +119,11 @@ class VlasovResult:
     """Outcome of :func:`solve_vlasov`."""
     solution: Solution
     soil: VlasovSoil
-    gamma: float
-    k: float
-    g: float
-    history: list[float] = field(default_factory=list)
+    gamma: float = field(metadata=quantity(DIMENSIONLESS, "converged decay parameter"))
+    k: float = field(metadata=quantity(STRESS, "first parameter per unit length of beam"))
+    g: float = field(metadata=quantity(FORCE, "second parameter per unit length of beam (2t)"))
+    history: list[float] = field(default_factory=list, metadata=quantity(
+        DIMENSIONLESS, "gamma at every iteration"))
 
     @property
     def t(self) -> float:

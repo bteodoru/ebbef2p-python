@@ -14,18 +14,31 @@ from dataclasses import dataclass, field
 from itertools import pairwise
 from typing import Self
 
+from .dimensions import (
+    DIMENSIONLESS,
+    FORCE,
+    FORCE_PER_LENGTH,
+    LENGTH,
+    MOMENT,
+    SECOND_MOMENT,
+    STRESS,
+    quantity,
+)
 from .exceptions import ModelError
 
 Pair = tuple[float, float]
 
 
+_DOWN = "positive downwards"
+
+
 @dataclass(frozen=True)
 class BeamSegment:
     """Beam portion ``[x0, x1]`` with constant bending stiffness."""
-    x0: float
-    x1: float
-    E: float
-    I: float
+    x0: float = field(metadata=quantity(LENGTH, "start of the segment"))
+    x1: float = field(metadata=quantity(LENGTH, "end of the segment"))
+    E: float = field(metadata=quantity(STRESS, "Young's modulus of the beam"))
+    I: float = field(metadata=quantity(SECOND_MOMENT, "second moment of area of the section"))
 
     @property
     def EI(self) -> float:
@@ -41,34 +54,41 @@ class FoundationSegment:
     linearly in between. ``g`` equals 2t in Vlasov's notation and G_p in
     Pasternak's. Overlapping segments add up.
     """
-    x0: float
-    x1: float
-    k: Pair = (0.0, 0.0)
-    g: Pair = (0.0, 0.0)
+    x0: float = field(metadata=quantity(LENGTH, "start of the segment"))
+    x1: float = field(metadata=quantity(LENGTH, "end of the segment"))
+    k: Pair = field(default=(0.0, 0.0), metadata=quantity(
+        STRESS, "first (Winkler) parameter per unit length of beam, at (x0, x1)"))
+    g: Pair = field(default=(0.0, 0.0), metadata=quantity(
+        FORCE, "second (shear) parameter per unit length of beam, at (x0, x1); "
+        "g = 2t (Vlasov) = G_p (Pasternak)"))
 
 
 @dataclass(frozen=True)
 class PointLoad:
-    x: float
-    force: float = 0.0
-    moment: float = 0.0
+    """Concentrated force and/or moment at ``x``."""
+    x: float = field(metadata=quantity(LENGTH, "position of the load"))
+    force: float = field(default=0.0, metadata=quantity(FORCE, f"concentrated force, {_DOWN}"))
+    moment: float = field(default=0.0, metadata=quantity(
+        MOMENT, "concentrated moment, positive when it does positive work on a positive theta"))
 
 
 @dataclass(frozen=True)
 class DistributedLoad:
     """Load per unit length on ``[x0, x1]``, varying linearly from q0 to q1."""
-    x0: float
-    x1: float
-    q0: float
-    q1: float
+    x0: float = field(metadata=quantity(LENGTH, "start of the load"))
+    x1: float = field(metadata=quantity(LENGTH, "end of the load"))
+    q0: float = field(metadata=quantity(FORCE_PER_LENGTH, f"load per unit length at x0, {_DOWN}"))
+    q1: float = field(metadata=quantity(FORCE_PER_LENGTH, f"load per unit length at x1, {_DOWN}"))
 
 
 @dataclass(frozen=True)
 class Support:
     """Prescribed displacement and/or rotation at ``x``; ``None`` leaves it free."""
-    x: float
-    w: float | None = 0.0
-    theta: float | None = None
+    x: float = field(metadata=quantity(LENGTH, "position of the support"))
+    w: float | None = field(default=0.0, metadata=quantity(
+        LENGTH, f"prescribed displacement, {_DOWN}; null leaves it free"))
+    theta: float | None = field(default=None, metadata=quantity(
+        DIMENSIONLESS, "prescribed rotation dw/dx; null leaves it free"))
 
 
 def _pair(value: float | Pair) -> Pair:
@@ -105,7 +125,8 @@ class Model:
     point_loads: list[PointLoad] = field(default_factory=list)
     distributed_loads: list[DistributedLoad] = field(default_factory=list)
     supports: list[Support] = field(default_factory=list)
-    soil_beyond_ends: bool = False
+    soil_beyond_ends: bool = field(default=False, metadata={
+        "doc": "the foundation continues beyond both beam ends (end springs sqrt(k*g))"})
 
     # -- building -------------------------------------------------------
     def add_beam(self, x0: float, x1: float, E: float, I: float) -> Self:
