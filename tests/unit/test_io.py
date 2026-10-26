@@ -132,7 +132,8 @@ def with_beam(index, **changes):
 
 @pytest.mark.parametrize("data, message", [
     (with_beam(0, EE=3), "beams[0].EE: unknown key"),
-    (with_beam(1, E=-1), "beams[1]: E and I must be positive"),
+    (with_beam(1, E=-1), "beams[1].E: E must be positive"),
+    (with_beam(1, x1=5), "beams[1].x1: beam segment must have x1 > x0"),
     (with_beam(0, x1=4), "model: beam segments leave a gap"),
     ({**base(), "version": 2}, "version"),
     ({**base(), "format": "ebbef2p-soil"}, "format"),
@@ -192,7 +193,8 @@ def test_example_vlasov_soil_gives_same_gamma():
 
 
 @pytest.mark.parametrize("data, message", [
-    ({"E_top": 144, "nu": 0.5, "depth": 25}, "soil: nu must satisfy"),
+    ({"E_top": 144, "nu": 0.5, "depth": 25}, "soil.nu: nu must satisfy"),
+    ({"E_top": 144, "nu": 0.2, "depth": -1}, "soil.depth: depth must be positive"),
     ({"E_top": 144, "nu": 0.2, "depth": 25, "H": 3}, "soil.H: unknown key"),
     ({"E_top": 144, "nu": 0.2}, "soil.depth: missing"),
     ({"E_top": 144, "nu": 0.2, "depth": 25, "format": "ebbef2p-model"}, "format"),
@@ -246,3 +248,47 @@ def test_vlasov_soil_schema(soil):
     v = validator(vlasov_soil_json_schema())
     v.validate(vlasov_soil_to_dict(soil))
     assert not v.is_valid({**vlasov_soil_to_dict(soil), "H": 3})
+
+
+@pytest.mark.parametrize("data, path", [
+    (with_beam(1, E=-1), "beams[1].E"),
+    (with_beam(0, EE=3), "beams[0].EE"),
+    ({"beams": [{"x0": 0, "x1": 1, "E": 1}]}, "beams[0].I"),
+    ({"beams": [{"x0": 0, "x1": 1, "E": 1, "I": 1}],
+      "supports": [{"x": 0, "w": None}]}, "supports[0]"),
+    (with_beam(0, x1=4), "model"),
+    ({**base(), "loads": []}, "loads"),
+    ({**base(), "version": 2}, "version"),
+])
+def test_errors_carry_their_path(data, path):
+    with pytest.raises(ModelError) as info:
+        model_from_dict(data)
+    assert info.value.path == path
+    assert str(info.value).startswith(f"{path}: ")
+
+
+def test_vlasov_soil_error_path():
+    with pytest.raises(ModelError) as info:
+        vlasov_soil_from_dict({"E_top": 144, "nu": 0.2, "depth": 25, "E_bottom": 0})
+    assert info.value.path == "soil.E_bottom"
+
+
+def test_omitted_q1_is_a_uniform_load():
+    data = model_to_dict(Model().add_beam(0, 10, 1, 1))
+    data["distributed_loads"] = [{"x0": 0, "x1": 10, "q0": 5}]
+    validator(model_json_schema()).validate(data)
+    model = model_from_dict(data)
+    assert model.distributed_loads[0].q1 == 5.0
+    assert model_to_dict(model)["distributed_loads"][0]["q1"] == 5.0
+
+
+@pytest.mark.parametrize("version, accepted", [(1, True), (1.0, True), ("1", False),
+                                               (True, False), (2, False)])
+def test_version_accepted_as_in_schema(version, accepted):
+    data = {**base(), "version": version}
+    assert validator(model_json_schema()).is_valid(data) is accepted
+    if accepted:
+        model_from_dict(data)
+    else:
+        with pytest.raises(ModelError, match="version"):
+            model_from_dict(data)

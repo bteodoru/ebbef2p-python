@@ -54,17 +54,21 @@ class ElementEndValues:
         """Value at any ``x`` on the beam, linear between the ends of each element.
 
         Between nodes this is a linear interpolation of the element-end
-        values, so its accuracy depends on the mesh. At a node (or within
-        ``np.isclose`` of one, as in :meth:`at`) ``side`` picks the element on
-        the left or on the right, so jumps are kept; at the beam ends it is
-        ignored.
+        values, so its accuracy depends on the mesh. At a node, or within
+        ``np.isclose`` of one as in :meth:`at` (relative tolerance 1e-5,
+        absolute 1e-8, so the snapping distance grows with ``|x|``), ``side``
+        picks the element on the left or on the right, so jumps are kept; at
+        the beam ends it is ignored.
 
         Returns a float for a scalar ``x`` and an array of the same shape
-        otherwise. Raises ``ValueError`` for points outside the beam.
+        otherwise. Raises ``ValueError`` for points outside the beam and for
+        NaN or infinite ``x``.
         """
         if side not in ('left', 'right'):
             raise ValueError("side must be 'left' or 'right'")
         x = np.asarray(x, dtype=float)
+        if not np.all(np.isfinite(x)):
+            raise ValueError("x must be finite")
         starts, ends = self.x[0::2], self.x[1::2]
         nodes = np.append(starts, ends[-1])
         # snap to the nearest node when within isclose of it

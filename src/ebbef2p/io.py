@@ -14,11 +14,13 @@ The format of a model is::
 
 The keys of every item are the fields of the matching dataclass of
 :mod:`ebbef2p.model`; missing optional keys take their defaults, unknown
-keys are errors. ``k`` and ``g`` may be a number or a pair on input and are
-always written as pairs. Models are rebuilt through the ``add_*`` methods,
-so they are validated exactly as when built in code; errors are
-:class:`~ebbef2p.exceptions.ModelError` with the path of the offending item
-or field in the message, e.g. ``beams[1].E: expected a number, got str``.
+keys are errors. A key is required only if the matching ``add_*`` argument
+has no default, so ``q1`` may be omitted for a uniform load. ``k`` and ``g``
+may be a number or a pair on input and are always written as pairs. Models
+are rebuilt through the ``add_*`` methods, so they are validated exactly as
+when built in code; errors are :class:`~ebbef2p.exceptions.ModelError`
+whose message starts with the path of the offending item or field, which is
+also in their ``path`` attribute, e.g. ``beams[1].E: E must be positive``.
 
 A :class:`~ebbef2p.vlasov.VlasovSoil` is written in the same way::
 
@@ -37,6 +39,7 @@ with the standard library module.
 
 import copy
 import dataclasses
+import inspect
 import math
 import typing
 from collections.abc import Callable, Mapping
@@ -87,8 +90,20 @@ def _serialized_fields(cls: type) -> list[tuple[dataclasses.Field, Kind]]:
     return [(f, _kind(hints[f.name])) for f in dataclasses.fields(cls)]
 
 
-def _required(f: dataclasses.Field) -> bool:
-    return f.default is dataclasses.MISSING and f.default_factory is dataclasses.MISSING
+def _required_args(builder: Callable[..., Any]) -> set[str]:
+    """Arguments of an ``add_*`` method (or class) that have no default."""
+    return {name for name, p in inspect.signature(builder).parameters.items()
+            if name != "self" and p.default is inspect.Parameter.empty}
+
+
+def _error(path: str, message: str) -> ModelError:
+    return ModelError(f"{path}: {message}", path=path)
+
+
+def _located(err: ModelError, path: str) -> ModelError:
+    """``err`` from a builder, located at ``path`` (and its field, if known)."""
+    where = f"{path}.{err.field}" if err.field else path
+    return _error(where, str(err))
 
 
 # -- writing --------------------------------------------------------------
@@ -109,7 +124,7 @@ def model_to_dict(model: Model) -> dict[str, Any]:
 # -- reading --------------------------------------------------------------
 def _object(data: Any, path: str) -> Mapping[str, Any]:
     if not isinstance(data, Mapping):
-        raise ModelError(f"{path}: expected an object, got {type(data).__name__}")
+        raise _error(path, f"expected an object, got {type(data).__name__}")
     return data
 
 
@@ -132,38 +147,42 @@ def _value(kind: Kind, value: Any, path: str) -> Any:
         return value
     expected = {"number": "a number", "number_or_null": "a number or null",
                 "pair": "a number or a pair of numbers", "boolean": "true or false"}[kind]
-    raise ModelError(f"{path}: expected {expected}, got {value!r}")
+    raise _error(path, f"expected {expected}, got {value!r}")
 
 
 def _check_keys(data: Mapping[str, Any], allowed: typing.Iterable[str], prefix: str) -> None:
     allowed = set(allowed)
     for key in data:
         if key not in allowed:
-            raise ModelError(f"{prefix}{key}: unknown key")
+            raise _error(f"{prefix}{key}", "unknown key")
 
 
-def _fields_from_dict(cls: type, data: Any, path: str) -> dict[str, Any]:
-    """Checked keyword arguments for ``cls`` (or its builder) from ``data``."""
+def _fields_from_dict(cls: type, builder: Callable[..., Any], data: Any,
+                      path: str) -> dict[str, Any]:
+    """Checked keyword arguments for ``builder`` (which builds ``cls``) from ``data``."""
     data = _object(data, path)
     spec = _serialized_fields(cls)
     _check_keys(data, (f.name for f, _ in spec), f"{path}.")
+    required = _required_args(builder)
     kwargs = {}
     for f, kind in spec:
         if f.name in data:
             kwargs[f.name] = _value(kind, data[f.name], f"{path}.{f.name}")
-        elif _required(f):
-            raise ModelError(f"{path}.{f.name}: missing")
+        elif f.name in required:
+            raise _error(f"{path}.{f.name}", "missing")
     return kwargs
 
 
 def _check_header(data: Mapping[str, Any], expected_format: str) -> None:
     fmt = data.get("format", expected_format)
     if fmt != expected_format:
-        raise ModelError(f"format: expected {expected_format!r}, got {fmt!r}")
+        raise _error("format", f"expected {expected_format!r}, got {fmt!r}")
     version = data.get("version", FORMAT_VERSION)
-    if type(version) is not int or version != FORMAT_VERSION:
-        raise ModelError(f"version: unsupported version {version!r} "
-                         f"(this ebbef2p reads version {FORMAT_VERSION})")
+    # any JSON number equal to 1 (also 1.0), as in the schema; not a bool or a string
+    if isinstance(version, bool) or not isinstance(version, (int, float)) \
+            or version != FORMAT_VERSION:
+        raise _error("version", f"unsupported version {version!r} "
+                                f"(this ebbef2p reads version {FORMAT_VERSION})")
 
 
 def model_from_dict(data: Mapping[str, Any], validate: bool = True) -> Model:
@@ -182,7 +201,8 @@ def model_from_dict(data: Mapping[str, Any], validate: bool = True) -> Model:
     Raises
     ------
     ModelError
-        With the path of the item or field in the message.
+        With the path of the item or field at the start of the message and
+        in its ``path`` attribute.
     """
     data = _object(data, "model")
     _check_keys(data, ("format", "version", "soil_beyond_ends", *_SECTIONS), "")
@@ -192,19 +212,19 @@ def model_from_dict(data: Mapping[str, Any], validate: bool = True) -> Model:
     for key, (cls, add) in _SECTIONS.items():
         items = data.get(key, [])
         if not isinstance(items, list):
-            raise ModelError(f"{key}: expected a list, got {type(items).__name__}")
+            raise _error(key, f"expected a list, got {type(items).__name__}")
         for i, item in enumerate(items):
             path = f"{key}[{i}]"
-            kwargs = _fields_from_dict(cls, item, path)
+            kwargs = _fields_from_dict(cls, add, item, path)
             try:
                 add(model, **kwargs)
             except ModelError as err:
-                raise ModelError(f"{path}: {err}") from err
+                raise _located(err, path) from err
     if validate:
         try:
             model.validate()
         except ModelError as err:
-            raise ModelError(f"model: {err}") from err
+            raise _error("model", str(err)) from err
     return model
 
 
@@ -225,11 +245,11 @@ def vlasov_soil_from_dict(data: Mapping[str, Any]) -> VlasovSoil:
     header = {key: data[key] for key in ("format", "version") if key in data}
     _check_header(header, VLASOV_SOIL_FORMAT)
     fields = {key: value for key, value in data.items() if key not in header}
-    kwargs = _fields_from_dict(VlasovSoil, fields, "soil")
+    kwargs = _fields_from_dict(VlasovSoil, VlasovSoil, fields, "soil")
     try:
         return VlasovSoil(**kwargs)
     except ModelError as err:
-        raise ModelError(f"soil: {err}") from err
+        raise _located(err, "soil") from err
 
 
 # -- JSON Schema ------------------------------------------------------------
@@ -249,7 +269,7 @@ def _description(f: dataclasses.Field) -> str:
     return f"{f.metadata['doc']} [{dimension}]" if dimension else f.metadata["doc"]
 
 
-def _object_schema(cls: type) -> dict[str, Any]:
+def _object_schema(cls: type, builder: Callable[..., Any]) -> dict[str, Any]:
     properties = {}
     for f, kind in _serialized_fields(cls):
         prop = {**copy.deepcopy(_JSON_TYPES[kind]), "description": _description(f)}
@@ -258,7 +278,8 @@ def _object_schema(cls: type) -> dict[str, Any]:
         properties[f.name] = prop
     return {"type": "object", "description": cls.__doc__.splitlines()[0],
             "properties": properties,
-            "required": [f.name for f, _ in _serialized_fields(cls) if _required(f)],
+            "required": [f.name for f, _ in _serialized_fields(cls)
+                         if f.name in _required_args(builder)],
             "additionalProperties": False}
 
 
@@ -274,17 +295,19 @@ def model_json_schema() -> dict[str, Any]:
     properties = {**_header_schema(MODEL_FORMAT),
                   "soil_beyond_ends": {"type": "boolean", "default": beyond.default,
                                        "description": _description(beyond)}}
-    for key, (cls, _) in _SECTIONS.items():
-        properties[key] = {"type": "array", "items": _object_schema(cls), "default": []}
+    for key, (cls, add) in _SECTIONS.items():
+        properties[key] = {"type": "array", "items": _object_schema(cls, add), "default": []}
     return {"$schema": _SCHEMA_DIALECT, "title": "EBBEF2p model", "type": "object",
             "description": "Beam on a two-parameter elastic foundation. No units are built "
                            "in: use any consistent set (e.g. kN and m). Dimensions are given "
-                           "in brackets as powers of force F and length L.",
+                           "in brackets as powers of force F and length L. Numbers must be "
+                           "finite.",
             "properties": properties, "additionalProperties": False}
 
 
 def vlasov_soil_json_schema() -> dict[str, Any]:
     """JSON Schema (draft 2020-12) of the dictionaries read by :func:`vlasov_soil_from_dict`."""
-    schema = _object_schema(VlasovSoil)
+    schema = _object_schema(VlasovSoil, VlasovSoil)
     schema["properties"] = {**_header_schema(VLASOV_SOIL_FORMAT), **schema["properties"]}
+    schema["description"] += " Numbers must be finite."
     return {"$schema": _SCHEMA_DIALECT, "title": "EBBEF2p modified Vlasov soil", **schema}

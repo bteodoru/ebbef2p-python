@@ -1,6 +1,7 @@
 """Section properties of the beam."""
 
 from .exceptions import ModelError
+from .model import check_finite
 
 
 def rectangular_section(b: float, h: float) -> float:
@@ -24,6 +25,9 @@ def rectangular_section(b: float, h: float) -> float:
     ``g = g_s*b``). A width that matches I but not the contact with the soil
     would give a wrong ``k``.
     """
-    if b <= 0 or h <= 0:
-        raise ModelError("b and h must be positive")
+    check_finite(b=b, h=h)
+    if b <= 0:
+        raise ModelError("b must be positive", field="b")
+    if h <= 0:
+        raise ModelError("h must be positive", field="h")
     return b*h**3/12

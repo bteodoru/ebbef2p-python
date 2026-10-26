@@ -118,9 +118,10 @@ Saving and loading models
         model = model_from_dict(json.load(f))
 
 The model is rebuilt through the ``add_*`` methods and checked as a whole,
-so errors are those of building it in code, with the path of the offending
-field (``beams[1].E: expected a number, got '2000'``); unknown keys are
-errors. ``model_from_dict(data, validate=False)`` reloads an incomplete
+so errors are those of building it in code. Each error starts with the
+path of the offending field, which is also in its ``path`` attribute
+(``beams[1].E: E must be positive``); unknown keys are errors, and an
+omitted ``q1`` means a uniform load. ``model_from_dict(data, validate=False)`` reloads an incomplete
 model. :func:`~ebbef2p.io.vlasov_soil_to_dict` and
 :func:`~ebbef2p.io.vlasov_soil_from_dict` do the same for a
 :class:`~ebbef2p.vlasov.VlasovSoil`, and

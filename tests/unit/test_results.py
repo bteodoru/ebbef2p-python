@@ -119,3 +119,6 @@ def test_interpolate_outside_beam(razaqpur):
         assert M.interpolate(x, "left") == M.interpolate(x, "right")
     with pytest.raises(ValueError, match="side"):
         M.interpolate(3, "middle")
+    for x in (float("nan"), float("inf"), [1.0, float("nan")]):
+        with pytest.raises(ValueError, match="finite"):
+            M.interpolate(x)

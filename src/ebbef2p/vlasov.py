@@ -22,7 +22,7 @@ import numpy as np
 
 from .dimensions import DIMENSIONLESS, FORCE, LENGTH, STRESS, quantity
 from .exceptions import ConvergenceError, ModelError
-from .model import Model
+from .model import Model, check_finite
 from .results import _GAUSS_W, _GAUSS_XI, Solution
 from .solver import solve
 
@@ -62,12 +62,15 @@ class VlasovSoil:
         STRESS, "Young's modulus at the base; null means E_top (homogeneous layer)"))
 
     def __post_init__(self) -> None:
+        check_finite(E_top=self.E_top, nu=self.nu, depth=self.depth, E_bottom=self.E_bottom)
         if not 0 <= self.nu < 0.5:
-            raise ModelError("nu must satisfy 0 <= nu < 0.5")
-        if self.depth <= 0 or self.E_top <= 0:
-            raise ModelError("depth and E_top must be positive")
+            raise ModelError("nu must satisfy 0 <= nu < 0.5", field="nu")
+        if self.E_top <= 0:
+            raise ModelError("E_top must be positive", field="E_top")
+        if self.depth <= 0:
+            raise ModelError("depth must be positive", field="depth")
         if self.E_bottom is not None and self.E_bottom <= 0:
-            raise ModelError("E_bottom must be positive")
+            raise ModelError("E_bottom must be positive", field="E_bottom")
 
     def parameters(self, gamma: float) -> tuple[float, float]:
         """Foundation parameters ``(k, g)`` for a given ``gamma`` (g = 2t).

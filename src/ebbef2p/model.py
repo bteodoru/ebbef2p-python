@@ -10,6 +10,7 @@ Conventions
 * No system of units is built in; use any consistent set.
 """
 
+import math
 from dataclasses import dataclass, field
 from itertools import pairwise
 from typing import Self
@@ -78,7 +79,9 @@ class DistributedLoad:
     x0: float = field(metadata=quantity(LENGTH, "start of the load"))
     x1: float = field(metadata=quantity(LENGTH, "end of the load"))
     q0: float = field(metadata=quantity(FORCE_PER_LENGTH, f"load per unit length at x0, {_DOWN}"))
-    q1: float = field(metadata=quantity(FORCE_PER_LENGTH, f"load per unit length at x1, {_DOWN}"))
+    q1: float = field(metadata=quantity(
+        FORCE_PER_LENGTH, f"load per unit length at x1, {_DOWN}; on input, omitted means q0 "
+        "(uniform load)"))
 
 
 @dataclass(frozen=True)
@@ -100,6 +103,14 @@ def _pair(value: float | Pair) -> Pair:
 
 def _optional_float(value: float | None) -> float | None:
     return None if value is None else float(value)
+
+
+def check_finite(**values: float | Pair | None) -> None:
+    """Raise :class:`ModelError` naming the first argument that is NaN or infinite."""
+    for name, value in values.items():
+        parts = value if isinstance(value, (tuple, list)) else (value,)
+        if any(v is not None and not math.isfinite(float(v)) for v in parts):
+            raise ModelError(f"{name} must be a finite number", field=name)
 
 
 @dataclass
@@ -131,34 +142,42 @@ class Model:
     # -- building -------------------------------------------------------
     def add_beam(self, x0: float, x1: float, E: float, I: float) -> Self:
         """Add a beam segment with constant E and I."""
+        check_finite(x0=x0, x1=x1, E=E, I=I)
         if x1 <= x0:
-            raise ModelError("beam segment must have x1 > x0")
-        if E <= 0 or I <= 0:
-            raise ModelError("E and I must be positive")
+            raise ModelError("beam segment must have x1 > x0", field="x1")
+        if E <= 0:
+            raise ModelError("E must be positive", field="E")
+        if I <= 0:
+            raise ModelError("I must be positive", field="I")
         self.beams.append(BeamSegment(float(x0), float(x1), float(E), float(I)))
         return self
 
     def add_foundation(self, x0: float, x1: float, k: float | Pair = 0.0,
                        g: float | Pair = 0.0) -> Self:
         """Add a foundation segment; ``k`` and ``g`` are scalars or (start, end) pairs."""
-        if x1 <= x0:
-            raise ModelError("foundation segment must have x1 > x0")
         k, g = _pair(k), _pair(g)
-        if min(k) < 0 or min(g) < 0:
-            raise ModelError("foundation parameters must be non-negative")
+        check_finite(x0=x0, x1=x1, k=k, g=g)
+        if x1 <= x0:
+            raise ModelError("foundation segment must have x1 > x0", field="x1")
+        if min(k) < 0:
+            raise ModelError("k must be non-negative", field="k")
+        if min(g) < 0:
+            raise ModelError("g must be non-negative", field="g")
         self.foundation.append(FoundationSegment(float(x0), float(x1), k, g))
         return self
 
     def add_point_load(self, x: float, force: float = 0.0, moment: float = 0.0) -> Self:
         """Add a concentrated force and/or moment at ``x``."""
+        check_finite(x=x, force=force, moment=moment)
         self.point_loads.append(PointLoad(float(x), float(force), float(moment)))
         return self
 
     def add_distributed_load(self, x0: float, x1: float, q0: float,
                              q1: float | None = None) -> Self:
         """Add a load varying from ``q0`` at ``x0`` to ``q1`` at ``x1`` (uniform if q1 is None)."""
+        check_finite(x0=x0, x1=x1, q0=q0, q1=q1)
         if x1 <= x0:
-            raise ModelError("distributed load must have x1 > x0")
+            raise ModelError("distributed load must have x1 > x0", field="x1")
         q1 = q0 if q1 is None else q1
         self.distributed_loads.append(DistributedLoad(float(x0), float(x1), float(q0), float(q1)))
         return self
@@ -170,6 +189,7 @@ class Model:
         Defaults to a simple support (w = 0, rotation free). Use
         ``theta=0`` for a clamped end.
         """
+        check_finite(x=x, w=w, theta=theta)
         if w is None and theta is None:
             raise ModelError("a support must constrain w, theta or both")
         self.supports.append(Support(float(x), _optional_float(w), _optional_float(theta)))
