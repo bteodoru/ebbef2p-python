@@ -21,3 +21,6 @@ docs/build/
 
 # OS
 .DS_Store
+
+# Session hand-off notes (kept local)
+HANDOFF*.md
