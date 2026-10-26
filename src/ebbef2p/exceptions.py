@@ -12,7 +12,19 @@ class EBBEF2pError(Exception):
 
 
 class ModelError(EBBEF2pError, ValueError):
-    """The problem definition is invalid or inconsistent."""
+    """The problem definition is invalid or inconsistent.
+
+    ``field`` names the offending argument when there is a single one
+    (``"E"``). ``path`` locates the error in a serialized model
+    (``"beams[1].E"``) when it is raised by :mod:`ebbef2p.io`. Both are None
+    otherwise.
+    """
+
+    def __init__(self, message: str, *, field: str | None = None,
+                 path: str | None = None) -> None:
+        super().__init__(message)
+        self.field = field
+        self.path = path
 
 
 class UnstableModelError(EBBEF2pError, np.linalg.LinAlgError):

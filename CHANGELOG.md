@@ -6,6 +6,35 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-26
+
+### Added
+
+- `ebbef2p.io`: `model_to_dict` / `model_from_dict` and `vlasov_soil_to_dict` /
+  `vlasov_soil_from_dict` save and load models and Vlasov soils as JSON-ready
+  dictionaries (format `ebbef2p-model`, version 1). Models are rebuilt through
+  the `add_*` methods; unknown keys are errors, and every error gives the path
+  of the field (`beams[1].E: E must be positive`), also as `ModelError.path`.
+  An omitted `q1` means a uniform load, as in `add_distributed_load`.
+  `model_from_dict(..., validate=False)` reloads incomplete models.
+- `model_json_schema()` and `vlasov_soil_json_schema()`: JSON Schemas (draft
+  2020-12) generated from the dataclasses.
+- `ebbef2p.dimensions`: every numeric field of the model and Vlasov classes
+  declares its physical dimension (powers of force and length) and a short
+  description as field metadata.
+- `ElementEndValues.interpolate(x, side)`: bending moment, shear force and
+  pressure anywhere on the beam, linear between element ends, with the side
+  of a node chosen as in `at()`.
+- `rectangular_section(b, h)`, with the equivalent height for other sections.
+- `ModelError.field`: the argument an error refers to, when there is one.
+
+### Changed
+
+- The `add_*` methods and `VlasovSoil` reject NaN and infinite values (they
+  used to build a meaningless model). Validation messages name a single
+  field: "E and I must be positive" is now "E must be positive" or "I must be
+  positive", and likewise for `k`/`g` and `depth`/`E_top`.
+
 ## [1.0.0] - 2026-10-26
 
 A rewrite with a new API. Code written for 0.0.x does not run unchanged;
@@ -114,7 +143,8 @@ The 0.0.x versions were tagged retroactively in 2026 on the commits whose
 code matches the sdists published on PyPI; the version number in
 `setup.py` was not always committed at the time.
 
-[Unreleased]: https://github.com/bteodoru/ebbef2p-python/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/bteodoru/ebbef2p-python/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/bteodoru/ebbef2p-python/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.3.dev0...v1.0.0
 [0.0.3.dev0]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.2.dev1...v0.0.3.dev0
 [0.0.2.dev1]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.1.dev1...v0.0.2.dev1

@@ -25,3 +25,6 @@ docs/build/
 # Session hand-off notes (kept local)
 HANDOFF*.md
 *.bundle
+
+# Local planning documents
+docs/superpowers/

@@ -49,6 +49,46 @@ class ElementEndValues:
             return float(self.values[idx[-1]])
         raise ValueError("side must be 'left' or 'right'")
 
+    def interpolate(self, x: ArrayLike,
+                    side: Literal['left', 'right'] = 'left') -> float | NDArray[np.float64]:
+        """Value at any ``x`` on the beam, linear between the ends of each element.
+
+        Between nodes this is a linear interpolation of the element-end
+        values, so its accuracy depends on the mesh. At a node, or within
+        ``np.isclose`` of one as in :meth:`at` (relative tolerance 1e-5,
+        absolute 1e-8, so the snapping distance grows with ``|x|``), ``side``
+        picks the element on the left or on the right, so jumps are kept; at
+        the beam ends it is ignored.
+
+        Returns a float for a scalar ``x`` and an array of the same shape
+        otherwise. Raises ``ValueError`` for points outside the beam and for
+        NaN or infinite ``x``.
+        """
+        if side not in ('left', 'right'):
+            raise ValueError("side must be 'left' or 'right'")
+        x = np.asarray(x, dtype=float)
+        if not np.all(np.isfinite(x)):
+            raise ValueError("x must be finite")
+        starts, ends = self.x[0::2], self.x[1::2]
+        nodes = np.append(starts, ends[-1])
+        # snap to the nearest node when within isclose of it
+        i = np.clip(np.searchsorted(nodes, x), 1, nodes.size - 1)
+        nearest = np.where(np.abs(x - nodes[i - 1]) <= np.abs(nodes[i] - x),
+                           nodes[i - 1], nodes[i])
+        x = np.where(np.isclose(x, nearest), nearest, x)
+        outside = (x < starts[0]) | (x > ends[-1])
+        if np.any(outside):
+            raise ValueError(f"x = {x[outside].ravel()[0]} lies outside the beam "
+                             f"[{starts[0]}, {ends[-1]}]")
+        if side == 'left':
+            e = np.searchsorted(ends, x, side='left')
+        else:
+            e = np.searchsorted(starts, x, side='right') - 1
+        e = np.clip(e, 0, starts.size - 1)
+        t = (x - starts[e])/(ends[e] - starts[e])
+        value = (1 - t)*self.values[2*e] + t*self.values[2*e + 1]
+        return float(value) if value.ndim == 0 else value
+
 
 @dataclass(frozen=True)
 class ReactivePressure(ElementEndValues):
@@ -64,6 +104,10 @@ class ReactivePressure(ElementEndValues):
         continues beyond the ends) and at interior nodes where g jumps.
     resultant : float
         Integral of p plus all concentrated forces (total soil reaction).
+
+    :meth:`~ElementEndValues.at` and :meth:`~ElementEndValues.interpolate`
+    give the distributed pressure only; the concentrated forces are in
+    ``concentrated``.
     """
     concentrated: list[tuple[float, float]] = field(default_factory=list)
     resultant: float = 0.0

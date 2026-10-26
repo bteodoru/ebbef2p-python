@@ -25,6 +25,14 @@ Beam segments
     and ``I``. Segments must cover the beam without gaps or overlaps; this
     is how a beam of stepped section is modelled.
 
+    For a rectangular section, :func:`~ebbef2p.sections.rectangular_section`
+    gives ``I = b*h**3/12``. Take ``b`` as the width in contact with the
+    soil; for any other section enter the equivalent height
+    ``h_eq = (12*I/b)**(1/3)`` computed with that width. The same ``b``
+    turns soil parameters given per unit area into the per-unit-length
+    values of the model, ``k = k_s*b``, so a width chosen only to reproduce
+    ``I`` would give a wrong ``k``.
+
 Foundation
     :meth:`~ebbef2p.model.Model.add_foundation` adds a segment on which the
     first parameter ``k`` and the second parameter ``g`` vary linearly. Each
@@ -69,7 +77,12 @@ Solving and results
 Internal forces and pressures are returned at both ends of every element,
 so jumps at nodes (under a point load, where the section or the foundation
 changes) are preserved. :meth:`~ebbef2p.results.ElementEndValues.at` picks
-the value on either side of a node.
+the value on either side of a node, and
+:meth:`~ebbef2p.results.ElementEndValues.interpolate` gives values anywhere
+on the beam, linear between the ends of each element (``M.interpolate(2.3)``,
+``M.interpolate(5, side='right')``). Between nodes this is an interpolation,
+so its accuracy depends on the mesh; for the reactive pressure it covers the
+distributed part only.
 
 Modified Vlasov foundation
 --------------------------
@@ -87,6 +100,34 @@ When the soil is described as an elastic layer rather than by ``k`` and
 
 The layer continues beyond the beam ends only if the model was created with
 ``Model(soil_beyond_ends=True)``.
+
+Saving and loading models
+-------------------------
+
+:mod:`ebbef2p.io` turns a model into a JSON-ready dictionary and back:
+
+.. code-block:: python
+
+    import json
+    from ebbef2p.io import model_from_dict, model_to_dict
+
+    with open("beam.json", "w") as f:
+        json.dump(model_to_dict(model), f, indent=2)
+
+    with open("beam.json") as f:
+        model = model_from_dict(json.load(f))
+
+The model is rebuilt through the ``add_*`` methods and checked as a whole,
+so errors are those of building it in code. Each error starts with the
+path of the offending field, which is also in its ``path`` attribute
+(``beams[1].E: E must be positive``); unknown keys are errors, and an
+omitted ``q1`` means a uniform load. ``model_from_dict(data, validate=False)`` reloads an incomplete
+model. :func:`~ebbef2p.io.vlasov_soil_to_dict` and
+:func:`~ebbef2p.io.vlasov_soil_from_dict` do the same for a
+:class:`~ebbef2p.vlasov.VlasovSoil`, and
+:func:`~ebbef2p.io.model_json_schema` gives a JSON Schema of the format in
+which every field is described with its dimension (see
+:mod:`ebbef2p.dimensions`).
 
 Quick plots
 -----------

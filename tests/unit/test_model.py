@@ -87,3 +87,43 @@ def test_exceptions_keep_their_builtin_bases():
     assert issubclass(ConvergenceError, RuntimeError)
     for exc in (ModelError, UnstableModelError, ConvergenceError):
         assert issubclass(exc, EBBEF2pError)
+
+
+def test_rectangular_section():
+    from ebbef2p import rectangular_section
+    assert rectangular_section(0.5, 1.0) == 0.5/12
+    b, I = 0.8, 0.0123
+    assert rectangular_section(b, (12*I/b)**(1/3)) == pytest.approx(I)
+    with pytest.raises(ModelError):
+        rectangular_section(0, 1.0)
+    with pytest.raises(ModelError) as info:
+        rectangular_section(1.0, float("nan"))
+    assert info.value.field == "h"
+
+
+@pytest.mark.parametrize("build, field", [
+    (lambda: Model().add_beam(0, 10, float("nan"), 1), "E"),
+    (lambda: Model().add_beam(0, float("inf"), 1, 1), "x1"),
+    (lambda: Model().add_foundation(0, 10, k=(1, float("nan"))), "k"),
+    (lambda: Model().add_point_load(5, force=float("inf")), "force"),
+    (lambda: Model().add_distributed_load(0, 10, 1, float("-inf")), "q1"),
+    (lambda: Model().add_support(5, w=float("nan")), "w"),
+    (lambda: VlasovSoil(E_top=144.0, nu=0.2, depth=float("inf")), "depth"),
+])
+def test_non_finite_input_is_rejected(build, field):
+    """NaN or infinite values would give a meaningless model that cannot be saved."""
+    with pytest.raises(ModelError, match="finite") as info:
+        build()
+    assert info.value.field == field
+
+
+@pytest.mark.parametrize("build, field", [
+    (lambda: Model().add_beam(0, 10, 1, -1), "I"),
+    (lambda: Model().add_beam(5, 5, 1, 1), "x1"),
+    (lambda: Model().add_foundation(0, 10, g=-1), "g"),
+    (lambda: VlasovSoil(E_top=-1.0, nu=0.2, depth=5.0), "E_top"),
+])
+def test_validation_errors_name_their_field(build, field):
+    with pytest.raises(ModelError) as info:
+        build()
+    assert info.value.field == field

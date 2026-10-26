@@ -20,8 +20,9 @@ from dataclasses import dataclass, field, replace
 
 import numpy as np
 
+from .dimensions import DIMENSIONLESS, FORCE, LENGTH, STRESS, quantity
 from .exceptions import ConvergenceError, ModelError
-from .model import Model
+from .model import Model, check_finite
 from .results import _GAUSS_W, _GAUSS_XI, Solution
 from .solver import solve
 
@@ -54,18 +55,22 @@ class VlasovSoil:
     E_bottom : float, optional
         Young's modulus at the base; defaults to ``E_top`` (homogeneous layer).
     """
-    E_top: float
-    nu: float
-    depth: float
-    E_bottom: float | None = None
+    E_top: float = field(metadata=quantity(STRESS, "Young's modulus at the surface"))
+    nu: float = field(metadata=quantity(DIMENSIONLESS, "Poisson's ratio, 0 <= nu < 0.5"))
+    depth: float = field(metadata=quantity(LENGTH, "layer thickness H above the rigid base"))
+    E_bottom: float | None = field(default=None, metadata=quantity(
+        STRESS, "Young's modulus at the base; null means E_top (homogeneous layer)"))
 
     def __post_init__(self) -> None:
+        check_finite(E_top=self.E_top, nu=self.nu, depth=self.depth, E_bottom=self.E_bottom)
         if not 0 <= self.nu < 0.5:
-            raise ModelError("nu must satisfy 0 <= nu < 0.5")
-        if self.depth <= 0 or self.E_top <= 0:
-            raise ModelError("depth and E_top must be positive")
+            raise ModelError("nu must satisfy 0 <= nu < 0.5", field="nu")
+        if self.E_top <= 0:
+            raise ModelError("E_top must be positive", field="E_top")
+        if self.depth <= 0:
+            raise ModelError("depth must be positive", field="depth")
         if self.E_bottom is not None and self.E_bottom <= 0:
-            raise ModelError("E_bottom must be positive")
+            raise ModelError("E_bottom must be positive", field="E_bottom")
 
     def parameters(self, gamma: float) -> tuple[float, float]:
         """Foundation parameters ``(k, g)`` for a given ``gamma`` (g = 2t).
@@ -117,10 +122,11 @@ class VlasovResult:
     """Outcome of :func:`solve_vlasov`."""
     solution: Solution
     soil: VlasovSoil
-    gamma: float
-    k: float
-    g: float
-    history: list[float] = field(default_factory=list)
+    gamma: float = field(metadata=quantity(DIMENSIONLESS, "converged decay parameter"))
+    k: float = field(metadata=quantity(STRESS, "first parameter per unit length of beam"))
+    g: float = field(metadata=quantity(FORCE, "second parameter per unit length of beam (2t)"))
+    history: list[float] = field(default_factory=list, metadata=quantity(
+        DIMENSIONLESS, "gamma at every iteration"))
 
     @property
     def t(self) -> float:
