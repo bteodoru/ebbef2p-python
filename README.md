@@ -3,6 +3,7 @@
 
 [![tests](https://github.com/bteodoru/ebbef2p-python/actions/workflows/tests.yml/badge.svg)](https://github.com/bteodoru/ebbef2p-python/actions/workflows/tests.yml)
 [![PyPI version](https://badge.fury.io/py/ebbef2p-python.svg)](https://badge.fury.io/py/ebbef2p-python)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23665165.svg)](https://doi.org/10.5281/zenodo.23665165)
 [![Python versions](https://img.shields.io/pypi/pyversions/ebbef2p-python)](https://pypi.org/project/ebbef2p-python/)
 [![GitHub license](https://img.shields.io/github/license/bteodoru/ebbef2p-python)](https://github.com/bteodoru/ebbef2p-python/blob/main/LICENSE)
 [![Documentation Status](https://readthedocs.org/projects/ebbef2p-python/badge/?version=latest)](https://ebbef2p-python.readthedocs.io/en/latest/?badge=latest)
@@ -88,7 +89,9 @@ migrate from the old `Structure` API.
 
 If you use EBBEF2p in your work, please cite it using the metadata in
 [CITATION.cff](CITATION.cff) (GitHub shows it under *Cite this
-repository*).
+repository*). The software is archived on Zenodo:
+[10.5281/zenodo.23665165](https://doi.org/10.5281/zenodo.23665165) (all
+versions; each release also has its own DOI).
 
 ## License
 

@@ -8,6 +8,14 @@ authors:
     email: bteodoru@gmail.com
     affiliation: "Gheorghe Asachi Technical University of Iași"
     orcid: "https://orcid.org/0000-0001-8298-9374"
+doi: 10.5281/zenodo.23665165
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23665165
+    description: All versions (resolves to the latest release)
+  - type: doi
+    value: 10.5281/zenodo.23665166
+    description: Version 1.0.0
 version: 1.0.0
 date-released: 2026-10-26
 license: MIT
