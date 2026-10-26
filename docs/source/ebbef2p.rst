@@ -3,7 +3,8 @@ ebbef2p package
 
 The names most users need are available directly from the package:
 :class:`~ebbef2p.model.Model`, :func:`~ebbef2p.solver.solve`,
-:class:`~ebbef2p.vlasov.VlasovSoil` and :func:`~ebbef2p.vlasov.solve_vlasov`.
+:class:`~ebbef2p.vlasov.VlasovSoil`, :func:`~ebbef2p.vlasov.solve_vlasov` and
+:func:`~ebbef2p.sections.rectangular_section`.
 
 Model
 -----
@@ -27,6 +28,25 @@ Modified Vlasov model
 ---------------------
 
 .. automodule:: ebbef2p.vlasov
+   :members:
+
+Serialization
+-------------
+
+.. automodule:: ebbef2p.io
+   :members: model_to_dict, model_from_dict, vlasov_soil_to_dict,
+      vlasov_soil_from_dict, model_json_schema, vlasov_soil_json_schema
+
+Sections
+--------
+
+.. automodule:: ebbef2p.sections
+   :members:
+
+Dimensions
+----------
+
+.. automodule:: ebbef2p.dimensions
    :members:
 
 Mesh

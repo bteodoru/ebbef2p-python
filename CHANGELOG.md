@@ -6,6 +6,23 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `ebbef2p.io`: `model_to_dict` / `model_from_dict` and `vlasov_soil_to_dict` /
+  `vlasov_soil_from_dict` save and load models and Vlasov soils as JSON-ready
+  dictionaries (format `ebbef2p-model`, version 1). Models are rebuilt through
+  the `add_*` methods; unknown keys are errors and messages give the path of
+  the field. `model_from_dict(..., validate=False)` reloads incomplete models.
+- `model_json_schema()` and `vlasov_soil_json_schema()`: JSON Schemas (draft
+  2020-12) generated from the dataclasses.
+- `ebbef2p.dimensions`: every numeric field of the model and Vlasov classes
+  declares its physical dimension (powers of force and length) and a short
+  description as field metadata.
+- `ElementEndValues.interpolate(x, side)`: bending moment, shear force and
+  pressure anywhere on the beam, linear between element ends, with the side
+  of a node chosen as in `at()`.
+- `rectangular_section(b, h)`, with the equivalent height for other sections.
+
 ## [1.0.0] - 2026-10-26
 
 A rewrite with a new API. Code written for 0.0.x does not run unchanged;
