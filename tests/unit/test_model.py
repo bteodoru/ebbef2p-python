@@ -87,3 +87,12 @@ def test_exceptions_keep_their_builtin_bases():
     assert issubclass(ConvergenceError, RuntimeError)
     for exc in (ModelError, UnstableModelError, ConvergenceError):
         assert issubclass(exc, EBBEF2pError)
+
+
+def test_rectangular_section():
+    from ebbef2p import rectangular_section
+    assert rectangular_section(0.5, 1.0) == 0.5/12
+    b, I = 0.8, 0.0123
+    assert rectangular_section(b, (12*I/b)**(1/3)) == pytest.approx(I)
+    with pytest.raises(ModelError):
+        rectangular_section(0, 1.0)
