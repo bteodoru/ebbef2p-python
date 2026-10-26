@@ -1,94 +1,59 @@
 ebbef2p package
 ===============
 
-Submodules
+The names most users need are available directly from the package:
+:class:`~ebbef2p.model.Model`, :func:`~ebbef2p.solver.solve`,
+:class:`~ebbef2p.vlasov.VlasovSoil` and :func:`~ebbef2p.vlasov.solve_vlasov`.
+
+Model
+-----
+
+.. automodule:: ebbef2p.model
+   :members:
+
+Solver
+------
+
+.. automodule:: ebbef2p.solver
+   :members:
+
+Results
+-------
+
+.. automodule:: ebbef2p.results
+   :members:
+
+Modified Vlasov model
+---------------------
+
+.. automodule:: ebbef2p.vlasov
+   :members:
+
+Mesh
+----
+
+.. automodule:: ebbef2p.mesh
+   :members:
+
+Element matrices
+----------------
+
+.. automodule:: ebbef2p.elements
+   :members:
+
+Exceptions
 ----------
 
-ebbef2p.beam module
--------------------
+All errors raised by the package derive from
+:class:`~ebbef2p.exceptions.EBBEF2pError` and also from the matching
+built-in exception, so they can be caught either way.
 
-.. automodule:: ebbef2p.beam
+.. automodule:: ebbef2p.exceptions
    :members:
-   :undoc-members:
-   
-
-ebbef2p.distributed\_load module
---------------------------------
-
-.. automodule:: ebbef2p.distributed_load
-   :members:
-   :undoc-members:
    :show-inheritance:
 
-ebbef2p.elastic\_foundation\_support module
--------------------------------------------
+Plotting
+--------
 
-.. automodule:: ebbef2p.elastic_foundation_support
+.. automodule:: ebbef2p.plotting
    :members:
-   :undoc-members:
-   :show-inheritance:
-
-ebbef2p.element module
-----------------------
-
-.. automodule:: ebbef2p.element
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-ebbef2p.helpers module
-----------------------
-
-.. automodule:: ebbef2p.helpers
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-ebbef2p.nodal\_load module
---------------------------
-
-.. automodule:: ebbef2p.nodal_load
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-ebbef2p.nodal\_support module
------------------------------
-
-.. automodule:: ebbef2p.nodal_support
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-ebbef2p.soil\_conditions module
--------------------------------
-
-.. automodule:: ebbef2p.soil_conditions
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-ebbef2p.structure module
-------------------------
-
-.. automodule:: ebbef2p.structure
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-ebbef2p.vlasov\_foundation\_parameters module
----------------------------------------------
-
-.. automodule:: ebbef2p.vlasov_foundation_parameters
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: ebbef2p
-   :members:
-   :undoc-members:
-   :show-inheritance:

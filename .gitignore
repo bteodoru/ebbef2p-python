@@ -1,7 +1,26 @@
-# ignore build files for docs
-docs/build/*
-
-
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
 build/
-ebbef2p_python.egg-info/
 dist/
+
+# Environments
+.venv/
+env/
+
+# Tools
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Docs
+docs/build/
+
+# OS
+.DS_Store
+
+# Session hand-off notes (kept local)
+HANDOFF*.md
