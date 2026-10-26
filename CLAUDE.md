@@ -100,5 +100,8 @@ Full text in `docs/source/user_guide/conventions.rst`.
   `0.5*l`) close to the formulas, so do not run `ruff format`. Line length 100.
 - `l` is the element length throughout (E741 is ignored on purpose).
 - NumPy-style docstrings; type hints on public functions (`NDArray[np.float64]`, `Self`).
-- User-visible changes go into `CHANGELOG.md`; the version lives in `src/ebbef2p/__init__.py`
-  (read by hatchling).
+- User-visible changes go into `CHANGELOG.md` (section *Unreleased*); the version lives in
+  `src/ebbef2p/__init__.py` (read by hatchling) and is repeated in `CITATION.cff`.
+- Releases: publishing a GitHub release tagged `vX.Y.Z` runs `.github/workflows/release.yml`
+  (fails if the tag differs from `__version__`, then publishes to PyPI by trusted publishing);
+  Zenodo mints the DOI from the same release. Steps in `CONTRIBUTING.md`.

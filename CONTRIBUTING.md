@@ -45,5 +45,16 @@ uv run sphinx-build -W -b html docs/source docs/build
 - **Documentation.** Update the docs and `CHANGELOG.md` (section
   *Unreleased*) for user-visible changes. The docs must build with `-W`.
 
+## Releasing (maintainer)
+
+1. Set the version in `src/ebbef2p/__init__.py` and in `CITATION.cff`
+   (`version`, `date-released`), and move the *Unreleased* entries of
+   `CHANGELOG.md` under the new version with its date.
+2. Merge to `main` and wait for CI.
+3. Publish a GitHub release with the tag `vX.Y.Z` on `main`. The `release`
+   workflow checks that the tag matches the version, runs the tests and
+   publishes to PyPI (trusted publishing); Zenodo archives the release and
+   mints a DOI.
+
 By contributing you agree that your contribution is licensed under the MIT
 License of the project.
