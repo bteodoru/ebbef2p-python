@@ -8,7 +8,8 @@ authors:
     email: bteodoru@gmail.com
     affiliation: "Gheorghe Asachi Technical University of Iași"
     orcid: "https://orcid.org/0000-0001-8298-9374"
-version: 1.0.0.dev0
+version: 1.0.0
+date-released: 2026-10-26
 license: MIT
 repository-code: "https://github.com/bteodoru/ebbef2p-python"
 url: "https://ebbef2p-python.readthedocs.io"

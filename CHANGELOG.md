@@ -4,7 +4,9 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [semantic versioning](https://semver.org/).
 
-## [1.0.0] - unreleased
+## [Unreleased]
+
+## [1.0.0] - 2026-10-26
 
 A rewrite with a new API. Code written for 0.0.x does not run unchanged;
 see *Migrating from 0.0.x* below.
@@ -112,7 +114,8 @@ The 0.0.x versions were tagged retroactively in 2026 on the commits whose
 code matches the sdists published on PyPI; the version number in
 `setup.py` was not always committed at the time.
 
-[1.0.0]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.3.dev0...HEAD
+[Unreleased]: https://github.com/bteodoru/ebbef2p-python/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.3.dev0...v1.0.0
 [0.0.3.dev0]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.2.dev1...v0.0.3.dev0
 [0.0.2.dev1]: https://github.com/bteodoru/ebbef2p-python/compare/v0.0.1.dev1...v0.0.2.dev1
 [0.0.1.dev1]: https://github.com/bteodoru/ebbef2p-python/releases/tag/v0.0.1.dev1

@@ -1,0 +1,44 @@
+name: release
+
+# Runs when a GitHub release is published. Zenodo archives the same release
+# and mints its DOI independently, through the Zenodo GitHub integration.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Check that the tag matches the package version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version=$(uv run --no-project python -c "import re, pathlib; print(re.search(r'__version__ = \"(.+)\"', pathlib.Path('src/ebbef2p/__init__.py').read_text())[1])")
+          test "$TAG" = "v$version" || { echo "tag $TAG does not match version $version"; exit 1; }
+      - run: uv run --locked --no-default-groups --group test pytest
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ebbef2p-python/
+    permissions:
+      id-token: write   # trusted publishing, no API token
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
